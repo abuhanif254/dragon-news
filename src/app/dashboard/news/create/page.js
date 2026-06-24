@@ -14,6 +14,20 @@ import Image from "next/image";
 import { createNews, getAllSubscribers, getCategories } from "@/lib/firestore";
 import { useEffect } from "react";
 import { subscribeToAuth } from "@/lib/auth-service";
+import dynamic from "next/dynamic";
+import "react-quill-new/dist/quill.snow.css";
+
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
+const quillModules = {
+  toolbar: [
+    [{ header: [2, 3, 4, false] }],
+    ["bold", "italic", "underline", "strike", "blockquote"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["link", "image"],
+    ["clean"],
+  ],
+};
 
 export default function CreateNews() {
   const router = useRouter();
@@ -44,8 +58,8 @@ export default function CreateNews() {
     return () => unsubscribe();
   }, []);
 
-  const wordCount = formData.details.trim() ? formData.details.trim().split(/\s+/).length : 0;
-  const charCount = formData.details.length;
+  const charCount = formData.details.replace(/(<([^>]+)>)/gi, "").length;
+  const wordCount = formData.details.replace(/(<([^>]+)>)/gi, "").trim() ? formData.details.replace(/(<([^>]+)>)/gi, "").trim().split(/\s+/).length : 0;
 
   const handleChange = (field) => (e) => {
     setFormData({ ...formData, [field]: e.target.value });
@@ -238,12 +252,18 @@ export default function CreateNews() {
                     }}
                   />
 
-                  <Box>
-                    <TextField
-                      fullWidth required multiline rows={12}
-                      label="Article Content"
+                  <Box sx={{
+                    "& .quill": { bgcolor: "white", borderRadius: 2 },
+                    "& .ql-toolbar": { borderTopLeftRadius: 8, borderTopRightRadius: 8, borderColor: "#e2e8f0" },
+                    "& .ql-container": { borderBottomLeftRadius: 8, borderBottomRightRadius: 8, borderColor: "#e2e8f0", minHeight: 300, fontSize: "1rem", fontFamily: "'Inter', sans-serif" }
+                  }}>
+                    <Typography variant="body2" fontWeight={600} sx={{ mb: 1, color: "#475569" }}>Article Content *</Typography>
+                    <ReactQuill
+                      theme="snow"
+                      value={formData.details}
+                      onChange={(val) => setFormData({ ...formData, details: val })}
+                      modules={quillModules}
                       placeholder="Write your article content here..."
-                      value={formData.details} onChange={handleChange("details")} sx={fieldSx}
                     />
                     <Stack direction="row" justifyContent="flex-end" gap={2} sx={{ mt: 1 }}>
                       <Typography variant="caption" sx={{ color: "#94a3b8" }}>

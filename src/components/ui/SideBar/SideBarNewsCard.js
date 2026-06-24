@@ -1,5 +1,5 @@
 import { Box, Divider, Stack, Typography, Avatar, Chip } from "@mui/material";
-import Image from "next/image";
+import SafeImage from "../SafeImage/SafeImage";
 import Link from "next/link";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
@@ -55,9 +55,11 @@ const SidebarNewsCard = ({ news, rank }) => {
 
           {/* Thumbnail */}
           <Box sx={{ flexShrink: 0, borderRadius: 1.5, overflow: "hidden", width: 90, height: 72, position: 'relative' }}>
-            <Image
-              src={news.thumbnail_url}
+            <SafeImage
+              src={news.thumbnail_url || news.image_url}
+              fallback="https://picsum.photos/400/300"
               fill
+              unoptimized
               alt={news.title}
               sizes="90px"
               style={{ objectFit: "cover", transition: "transform 0.3s" }}

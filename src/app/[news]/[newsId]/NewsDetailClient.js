@@ -10,7 +10,7 @@ import {
   Typography,
   Avatar,
 } from "@mui/material";
-import Image from "next/image";
+import SafeImage from "@/components/ui/SafeImage/SafeImage";
 import Link from "next/link";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import StarIcon from "@mui/icons-material/Star";
@@ -19,6 +19,15 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ReadingProgressBar from "@/components/ui/ReadingProgressBar/ReadingProgressBar";
 import ShareButtons from "@/components/ui/ShareButtons/ShareButtons";
 import VerifiedIcon from "@mui/icons-material/Verified";
+import DOMPurify from "isomorphic-dompurify";
+
+// Ensure all links open in a new tab securely
+DOMPurify.addHook("afterSanitizeAttributes", function (node) {
+  if (node.tagName === "A") {
+    node.setAttribute("target", "_blank");
+    node.setAttribute("rel", "noopener noreferrer");
+  }
+});
 
 const readingTime = (text = "") =>
   Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
@@ -52,12 +61,14 @@ export default function NewsDetailClient({ news, related }) {
       {/* ── Hero ── */}
       <Card sx={{ borderRadius: 3, overflow: "hidden", boxShadow: "0 4px 24px rgba(0,0,0,0.1)" }}>
         <Box sx={{ position: "relative", width: "100%", height: { xs: 240, sm: 360, md: 480 } }}>
-          <Image
-            src={news.thumbnail_url || news.image_url || "https://picsum.photos/1200/800"}
+          <SafeImage
+            src={news.thumbnail_url || news.image_url}
+            fallback="https://picsum.photos/1200/800"
             fill
             alt={news.title}
             style={{ objectFit: "cover" }}
             priority
+            unoptimized
             sizes="(max-width:768px) 100vw, 80vw"
           />
           <Box
@@ -150,22 +161,17 @@ export default function NewsDetailClient({ news, related }) {
 
           <Divider sx={{ mb: 3.5 }} />
 
-          <Box sx={{ maxWidth: 780 }}>
-            {(news.details || "").split("\n\n").map((paragraph, i) => (
-              <Typography
-                key={i}
-                variant="body1"
-                sx={{
-                  mb: 2.5,
-                  lineHeight: 1.9,
-                  color: "text.primary",
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: "1.05rem",
-                }}
-              >
-                {paragraph.trim()}
-              </Typography>
-            ))}
+        <Box sx={{ maxWidth: 780 }}>
+            {news.details && news.details.includes("<") && news.details.includes(">") ? (
+              <Box
+                className="article-prose"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(news.details, { ADD_ATTR: ['target'] }) }}
+              />
+            ) : (
+              <Box className="article-prose legacy-content">
+                {news.details}
+              </Box>
+            )}
           </Box>
 
           {Array.isArray(news.sources) && news.sources.length > 0 && (
@@ -215,10 +221,12 @@ export default function NewsDetailClient({ news, related }) {
                     }}
                   >
                     <Box sx={{ position: "relative", height: 160, overflow: "hidden" }}>
-                      <Image
+                      <SafeImage
                         className="rel-img"
-                        src={rel.thumbnail_url}
+                        src={rel.thumbnail_url || rel.image_url}
+                        fallback="https://picsum.photos/400/300"
                         fill
+                        unoptimized
                         alt={rel.title}
                         sizes="30vw"
                         style={{ objectFit: "cover", transition: "transform 0.4s ease" }}

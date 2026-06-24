@@ -5,6 +5,20 @@ import { useRouter, useParams } from "next/navigation";
 import { getNewsById, updateNews, getCategories } from "@/lib/firestore";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { subscribeToAuth } from "@/lib/auth-service";
+import dynamic from "next/dynamic";
+import "react-quill-new/dist/quill.snow.css";
+
+const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
+
+const quillModules = {
+  toolbar: [
+    [{ header: [2, 3, 4, false] }],
+    ["bold", "italic", "underline", "strike", "blockquote"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["link", "image"],
+    ["clean"],
+  ],
+};
 
 export default function EditNews() {
   const router = useRouter();
@@ -193,12 +207,20 @@ export default function EditNews() {
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField 
-                fullWidth required multiline rows={10} 
-                label="Article Content" 
-                value={formData.details} 
-                onChange={e => setFormData({...formData, details: e.target.value})} 
-              />
+              <Box sx={{
+                "& .quill": { bgcolor: "white", borderRadius: 2 },
+                "& .ql-toolbar": { borderTopLeftRadius: 8, borderTopRightRadius: 8, borderColor: "#e2e8f0" },
+                "& .ql-container": { borderBottomLeftRadius: 8, borderBottomRightRadius: 8, borderColor: "#e2e8f0", minHeight: 300, fontSize: "1rem", fontFamily: "'Inter', sans-serif" }
+              }}>
+                <Typography variant="body2" fontWeight={600} sx={{ mb: 1, color: "#475569" }}>Article Content *</Typography>
+                <ReactQuill
+                  theme="snow"
+                  value={formData.details}
+                  onChange={(val) => setFormData({ ...formData, details: val })}
+                  modules={quillModules}
+                  placeholder="Write your article content here..."
+                />
+              </Box>
             </Grid>
             <Grid item xs={12}>
               <Button 

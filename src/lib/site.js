@@ -4,7 +4,7 @@ export const SITE_DESCRIPTION =
   "The Brain publishes independent news, analysis, and essays for atheism activism, secular values, free inquiry, and humanist public life.";
 
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://the-brain-news.vercel.app"
+  process.env.NEXT_PUBLIC_SITE_URL || "https://blog.nexuscalculator.net"
 ).replace(/\/+$/, "");
 
 export const ADMIN_EMAIL = (

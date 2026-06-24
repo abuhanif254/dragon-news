@@ -1,5 +1,5 @@
 import { Box, Card, CardContent, Divider, Stack, Typography, Button, TextField } from "@mui/material";
-import Image from "next/image";
+import SafeImage from "../SafeImage/SafeImage";
 import SidebarNewsCard from "./SideBarNewsCard";
 import { getAllNews } from "@/utils/getAllNews";
 import Link from "next/link";
@@ -39,10 +39,12 @@ const SideBar = ({ allNews: data = [] }) => {
           }}
         >
           <Box sx={{ position: "relative", height: 200, overflow: "hidden" }}>
-            <Image
+            <SafeImage
               className="sidebar-hero-img"
-              src={heroNews.thumbnail_url}
+              src={heroNews.thumbnail_url || heroNews.image_url}
+              fallback="https://picsum.photos/600/400"
               fill
+              unoptimized
               alt={heroNews.title}
               sizes="35vw"
               style={{ objectFit: "cover", transition: "transform 0.4s ease" }}
