@@ -16,11 +16,13 @@ import TwitterIcon from "@mui/icons-material/Twitter";
 import YouTubeIcon from "@mui/icons-material/YouTube";
 import InstagramIcon from "@mui/icons-material/Instagram";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
+import RssFeedIcon from "@mui/icons-material/RssFeed";
 import SendIcon from "@mui/icons-material/Send";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { NAV_ITEMS } from "@/utils/navItems";
 import { subscribeToNewsletter } from "@/lib/firestore";
+import { useSiteSettings } from "./SiteSettingsProvider";
 
 const CATEGORIES = ["Technology", "Sports", "Culture", "Entertainment", "Business", "Science"];
 
@@ -30,6 +32,7 @@ const Footer = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState({ type: "", content: "" });
+  const { siteName, siteDescription, socialLinks } = useSiteSettings();
 
   useEffect(() => {
     // Only run on client to avoid hydration mismatch
@@ -62,6 +65,14 @@ const Footer = () => {
     }
   };
 
+  const socialIcons = [
+    { Icon: FacebookIcon, color: "#1877F2", label: "Facebook", key: "facebook" },
+    { Icon: TwitterIcon, color: "#1DA1F2", label: "Twitter", key: "twitter" },
+    { Icon: YouTubeIcon, color: "#FF0000", label: "YouTube", key: "youtube" },
+    { Icon: InstagramIcon, color: "#E4405F", label: "Instagram", key: "instagram" },
+    { Icon: LinkedInIcon, color: "#0A66C2", label: "LinkedIn", key: "linkedin" },
+  ];
+
   return (
     <Box
       component="footer"
@@ -89,27 +100,22 @@ const Footer = () => {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              The Brain
+              {siteName}
             </Typography>
             <Typography
               variant="body2"
               sx={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.8, mb: 3, maxWidth: 300 }}
             >
-              Delivering accurate, fast and unbiased journalism to readers worldwide since 2020. 
-              Journalism Without Fear or Favour.
+              {siteDescription}
             </Typography>
             <Stack direction="row" spacing={1}>
-              {[
-                { Icon: FacebookIcon, color: "#1877F2", label: "Facebook", url: "https://www.facebook.com/bitulla" },
-                { Icon: TwitterIcon, color: "#1DA1F2", label: "Twitter", url: "https://x.com/MohammadBitull1" },
-                { Icon: YouTubeIcon, color: "#FF0000", label: "YouTube", url: "https://www.youtube.com/@MohammadBitullah" },
-                { Icon: InstagramIcon, color: "#E4405F", label: "Instagram", url: "https://www.instagram.com/bitullah_aj" },
-                { Icon: LinkedInIcon, color: "#0A66C2", label: "LinkedIn", url: "https://www.linkedin.com/in/md-abu-hanif-mia" },
-              ].map(({ Icon, color, label, url }) => (
+              {socialIcons
+                .filter((social) => socialLinks && socialLinks[social.key])
+                .map(({ Icon, color, label, key }) => (
                 <Tooltip key={label} title={label} arrow>
                   <IconButton
                     component="a"
-                    href={url}
+                    href={socialLinks[key]}
                     target="_blank"
                     rel="noopener noreferrer"
                     size="small"
@@ -129,6 +135,30 @@ const Footer = () => {
                   </IconButton>
                 </Tooltip>
               ))}
+              
+              {/* RSS Feed Icon */}
+              <Tooltip title="RSS Feed" arrow>
+                <IconButton
+                  component="a"
+                  href="/rss.xml"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="small"
+                  sx={{
+                    color: "rgba(255,255,255,0.6)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      color: "#f39c12",
+                      borderColor: "#f39c12",
+                      backgroundColor: "#f39c1220",
+                      transform: "translateY(-2px)",
+                    },
+                  }}
+                >
+                  <RssFeedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Stack>
           </Grid>
 

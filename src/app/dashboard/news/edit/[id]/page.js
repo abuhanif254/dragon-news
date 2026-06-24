@@ -5,20 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { getNewsById, updateNews, getCategories } from "@/lib/firestore";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { subscribeToAuth } from "@/lib/auth-service";
-import dynamic from "next/dynamic";
-import "react-quill-new/dist/quill.snow.css";
-
-const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
-
-const quillModules = {
-  toolbar: [
-    [{ header: [2, 3, 4, false] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["link", "image"],
-    ["clean"],
-  ],
-};
+import CustomEditor from "@/components/ui/CustomEditor/CustomEditor";
+import ImageUpload from "@/components/ui/ImageUpload/ImageUpload";
 
 export default function EditNews() {
   const router = useRouter();
@@ -115,7 +103,7 @@ export default function EditNews() {
       author: {
         uid: article.author?.uid || user.uid,
         email: article.author?.email || user.email || "",
-        name: formData.authorName,
+        name: article.author?.name || user.displayName || user.name || "The Brain Editorial Team",
         published_date: article.author?.published_date || new Date().toISOString().split("T")[0],
         img: article.author?.img || user.photoURL || user.photo || "",
       },
@@ -168,7 +156,7 @@ export default function EditNews() {
                 onChange={e => setFormData({...formData, title: e.target.value})} 
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12}>
               <TextField 
                 select fullWidth required 
                 label="Category" 
@@ -183,27 +171,19 @@ export default function EditNews() {
               </TextField>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField 
-                fullWidth required 
-                label="Author Name" 
-                value={formData.authorName} 
-                onChange={e => setFormData({...formData, authorName: e.target.value})} 
+              <ImageUpload
+                label="Thumbnail Image (Square)"
+                folder="articles/thumbnails"
+                value={formData.thumbnail_url}
+                onChange={(url) => setFormData({ ...formData, thumbnail_url: url })}
               />
             </Grid>
-            <Grid item xs={12}>
-              <TextField 
-                fullWidth 
-                label="Thumbnail Image URL" 
-                value={formData.thumbnail_url} 
-                onChange={e => setFormData({...formData, thumbnail_url: e.target.value})} 
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField 
-                fullWidth 
-                label="Full Banner Image URL" 
-                value={formData.imageUrl} 
-                onChange={e => setFormData({...formData, imageUrl: e.target.value})} 
+            <Grid item xs={12} sm={6}>
+              <ImageUpload
+                label="Banner Image (16:9)"
+                folder="articles/banners"
+                value={formData.imageUrl}
+                onChange={(url) => setFormData({ ...formData, imageUrl: url })}
               />
             </Grid>
             <Grid item xs={12}>
@@ -213,11 +193,9 @@ export default function EditNews() {
                 "& .ql-container": { borderBottomLeftRadius: 8, borderBottomRightRadius: 8, borderColor: "#e2e8f0", minHeight: 300, fontSize: "1rem", fontFamily: "'Inter', sans-serif" }
               }}>
                 <Typography variant="body2" fontWeight={600} sx={{ mb: 1, color: "#475569" }}>Article Content *</Typography>
-                <ReactQuill
-                  theme="snow"
+                <CustomEditor
                   value={formData.details}
                   onChange={(val) => setFormData({ ...formData, details: val })}
-                  modules={quillModules}
                   placeholder="Write your article content here..."
                 />
               </Box>

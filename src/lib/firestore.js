@@ -7,6 +7,7 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  setDoc,
   query,
   where,
   orderBy,
@@ -428,6 +429,95 @@ export const saveAuthorProfile = async (id, profileData) => {
     return await res.json();
   } catch (error) {
     console.error("Error saving author profile via REST:", error);
+    throw error;
+  }
+};
+
+// ─── Site Settings ─────────────────────────────────────────────────────────────
+export const getSiteSettings = async () => {
+  if (!db) return null;
+  const projectId = db.app.options.projectId;
+  const apiKey = db.app.options.apiKey;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/settings/global?key=${apiKey}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: 60 }
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.fields) {
+        const { firestoreFieldsToObject } = await import("@/lib/content-utils");
+        return firestoreFieldsToObject(data.fields);
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Error getting site settings via REST:", error);
+    return null;
+  }
+};
+
+export const updateSiteSettings = async (settingsData) => {
+  try {
+    const docRef = doc(db, "settings", "global");
+    await setDoc(docRef, { ...settingsData, updatedAt: serverTimestamp() }, { merge: true });
+    return { status: true };
+  } catch (error) {
+    console.error("Error updating site settings:", error);
+    throw error;
+  }
+};
+
+// ─── CMS Pages ─────────────────────────────────────────────────────────────
+export const getAllPages = async () => {
+  try {
+    const pagesCol = collection(db, "pages");
+    const snapshot = await getDocs(pagesCol);
+    return snapshot.docs.map(doc => ({ slug: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Error getting all pages:", error);
+    return [];
+  }
+};
+
+export const getPage = async (slug) => {
+  if (!db) return null;
+  const projectId = db.app.options.projectId;
+  const apiKey = db.app.options.apiKey;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/pages/${slug}?key=${apiKey}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      next: { revalidate: 60 }
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.fields) {
+        const { firestoreFieldsToObject } = await import("@/lib/content-utils");
+        return { slug, ...firestoreFieldsToObject(data.fields) };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error getting page ${slug} via REST:`, error);
+    return null;
+  }
+};
+
+export const savePage = async (slug, pageData) => {
+  try {
+    const docRef = doc(db, "pages", slug);
+    await setDoc(docRef, { ...pageData, updatedAt: serverTimestamp() }, { merge: true });
+    return { status: true };
+  } catch (error) {
+    console.error(`Error saving page ${slug}:`, error);
     throw error;
   }
 };

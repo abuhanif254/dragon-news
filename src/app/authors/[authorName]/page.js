@@ -19,9 +19,23 @@ import ArticleIcon from "@mui/icons-material/Article";
 export async function generateMetadata({ params }) {
   const { authorName } = await params;
   const name = decodeURIComponent(authorName);
+  
+  const { getAuthorProfile, getSiteSettings } = await import("@/lib/firestore");
+  const [profile, settings] = await Promise.all([
+    getAuthorProfile(name),
+    getSiteSettings()
+  ]);
+
+  const siteName = settings?.siteName || "The Brain";
+  const bio = profile?.bio || `Read articles and professional insights from ${name} at ${siteName}.`;
+
   return {
-    title: `${name} | Author Profile | The Brain`,
-    description: `Read articles and professional insights from ${name} at The Brain.`,
+    title: `${name} | Author Profile | ${siteName}`,
+    description: bio,
+    openGraph: {
+      title: `${name} | Author Profile | ${siteName}`,
+      description: bio,
+    }
   };
 }
 

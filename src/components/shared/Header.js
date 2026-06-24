@@ -1,26 +1,24 @@
+"use client";
 import { Box, Container, Typography } from "@mui/material";
 import Image from "next/image";
 import Link from "next/link";
 import logo from "@/assets/the-brain-landscape-logo.png";
 import { getCurrentDate } from "@/utils/getCurrentDate";
+import { useSiteSettings } from "./SiteSettingsProvider";
 
 const Header = () => {
   const currentDate = getCurrentDate();
+  const { siteName, siteDescription, logoUrl } = useSiteSettings();
+
   return (
-    <Box className="w-full my-8">
+    <Box className="w-full pt-4 pb-2">
       <Container className="flex flex-col items-center">
         <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, mb: 1 }}>
-            <Image 
-              src={logo} 
-              alt="The Brain" 
-              priority 
-              style={{ width: "80px", height: "auto" }} 
-            />
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 0.5 }}>
             <Typography 
               variant="h1" 
               sx={{ 
-                fontSize: { xs: '2.5rem', md: '4rem' }, 
+                fontSize: { xs: '2rem', md: '3rem' }, 
                 fontWeight: 900, 
                 fontFamily: "'Playfair Display', serif", 
                 color: '#1a1a2e', 
@@ -28,7 +26,7 @@ const Header = () => {
                 letterSpacing: '-0.02em'
               }}
             >
-              The Brain
+              {siteName}
             </Typography>
           </Box>
         </Link>
@@ -44,7 +42,7 @@ const Header = () => {
             mb: 1 
           }}
         >
-          Intelligence Without Fear or Favour
+          {siteDescription || "Intelligence Without Fear or Favour"}
         </Typography>
         <Typography textAlign="center" sx={{ color: 'text.secondary', fontSize: '0.9rem', fontWeight: 500 }}>
           {currentDate}

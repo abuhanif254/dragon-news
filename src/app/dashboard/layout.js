@@ -20,6 +20,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import SearchIcon from "@mui/icons-material/Search";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import PagesIcon from "@mui/icons-material/Pages";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { subscribeToAuth, logout as firebaseLogout } from "@/lib/auth-service";
@@ -32,6 +33,7 @@ const MENU_ITEMS = [
   { title: "Articles", path: "/dashboard/news", icon: <ArticleIcon />, roles: ["admin", "writer"] },
   { title: "Publish New", path: "/dashboard/news/create", icon: <AddCircleIcon />, roles: ["admin", "writer"] },
   { title: "Categories", path: "/dashboard/categories", icon: <CategoryIcon />, roles: ["admin"] },
+  { title: "Pages", path: "/dashboard/pages", icon: <PagesIcon />, roles: ["admin"] },
   { title: "Analytics", path: "/dashboard/analytics", icon: <BarChartIcon />, roles: ["admin", "writer"] },
   { title: "Messages", path: "/dashboard/messages", icon: <EmailIcon />, roles: ["admin"] },
   { title: "Subscribers", path: "/dashboard/subscribers", icon: <PeopleIcon />, roles: ["admin"] },

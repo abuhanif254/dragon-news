@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -15,64 +15,121 @@ import {
   Alert,
   Avatar,
   IconButton,
-  Chip,
+  CircularProgress,
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import SecurityIcon from "@mui/icons-material/Security";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import PaletteIcon from "@mui/icons-material/Palette";
 import LanguageIcon from "@mui/icons-material/Language";
+import ShareIcon from "@mui/icons-material/Share";
+import { getSiteSettings, updateSiteSettings } from "@/lib/firestore";
+import { SITE_NAME, SITE_DESCRIPTION, ADMIN_EMAIL } from "@/lib/site";
 
 export default function SettingsPage() {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState({ show: false, type: "", message: "" });
+  
   const [settings, setSettings] = useState({
-    // Site Settings
-    siteName: "The Brain",
-    siteDescription: "Your trusted source for breaking news",
+    siteName: SITE_NAME,
+    siteDescription: SITE_DESCRIPTION,
     siteUrl: "https://dragonnews.com",
     contactEmail: "contact@dragonnews.com",
-    
-    // Profile Settings
     adminName: "Admin User",
-    adminEmail: "admin@dragon.news",
-    
-    // Notification Settings
-    emailNotifications: true,
-    newArticleAlerts: true,
-    commentNotifications: false,
-    weeklyReport: true,
-    
-    // Display Settings
-    articlesPerPage: 10,
-    showAuthorInfo: true,
-    enableComments: false,
-    showRelatedArticles: true,
+    adminEmail: ADMIN_EMAIL,
+    seoKeywords: "news, journalism, world, technology",
+    socialLinks: {
+      facebook: "https://facebook.com",
+      twitter: "https://twitter.com",
+      linkedin: "https://linkedin.com",
+      youtube: "https://youtube.com",
+    }
   });
 
-  const handleChange = (field, value) => {
-    setSettings({ ...settings, [field]: value });
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      setLoading(true);
+      const data = await getSiteSettings();
+      if (data) {
+        setSettings((prev) => ({
+          ...prev,
+          ...data,
+          socialLinks: { ...prev.socialLinks, ...(data.socialLinks || {}) }
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to load settings", err);
+      showAlert("error", "Failed to load settings from Firestore.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSave = () => {
-    // In a real app, this would save to backend
-    setAlert({ show: true, type: "success", message: "Settings saved successfully!" });
-    setTimeout(() => setAlert({ show: false, type: "", message: "" }), 3000);
+  const handleChange = (field, value) => {
+    if (field.startsWith("social_")) {
+      const socialKey = field.split("_")[1];
+      setSettings((prev) => ({
+        ...prev,
+        socialLinks: { ...prev.socialLinks, [socialKey]: value }
+      }));
+    } else {
+      setSettings((prev) => ({ ...prev, [field]: value }));
+    }
   };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await updateSiteSettings(settings);
+      showAlert("success", "Site settings updated successfully in Firestore!");
+    } catch (err) {
+      showAlert("error", "Failed to save settings. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const showAlert = (type, message) => {
+    setAlert({ show: true, type, message });
+    setTimeout(() => setAlert({ show: false, type: "", message: "" }), 5000);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
+        <CircularProgress color="error" />
+      </Box>
+    );
+  }
 
   return (
     <Box>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold" sx={{ color: "#1e293b", mb: 0.5 }}>
-          Settings
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Manage your site configuration and preferences
-        </Typography>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+        <Box>
+          <Typography variant="h4" fontWeight="bold" sx={{ color: "#1e293b", mb: 0.5 }}>
+            Settings
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Manage your site configuration and global preferences.
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          color="error"
+          size="large"
+          startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
+          onClick={handleSave}
+          disabled={saving}
+          sx={{ px: 4, borderRadius: 2 }}
+        >
+          {saving ? "Saving..." : "Save Changes"}
+        </Button>
       </Box>
 
-      {/* Alert */}
       {alert.show && (
         <Alert severity={alert.type} sx={{ mb: 3 }}>
           {alert.message}
@@ -133,21 +190,15 @@ export default function SettingsPage() {
                   type="email"
                   value={settings.adminEmail}
                   onChange={(e) => handleChange("adminEmail", e.target.value)}
+                  disabled
+                  helperText="Primary admin email cannot be changed from UI."
                 />
-                <Button
-                  variant="outlined"
-                  color="error"
-                  fullWidth
-                  sx={{ mt: 1 }}
-                >
-                  Change Password
-                </Button>
               </Stack>
             </CardContent>
           </Card>
         </Grid2>
 
-        {/* Site Settings */}
+        {/* Site Settings & Social Links */}
         <Grid2 size={{ xs: 12, lg: 8 }}>
           <Stack spacing={3}>
             {/* General Settings */}
@@ -156,7 +207,7 @@ export default function SettingsPage() {
                 <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 3 }}>
                   <LanguageIcon sx={{ color: "#3b82f6" }} />
                   <Typography variant="h6" fontWeight="bold">
-                    General Settings
+                    Global Site Settings
                   </Typography>
                 </Stack>
 
@@ -185,6 +236,7 @@ export default function SettingsPage() {
                       rows={2}
                       value={settings.siteDescription}
                       onChange={(e) => handleChange("siteDescription", e.target.value)}
+                      helperText="Used globally across the footer and meta tags."
                     />
                   </Grid2>
                   <Grid2 size={{ xs: 12, md: 6 }}>
@@ -198,173 +250,63 @@ export default function SettingsPage() {
                   </Grid2>
                   <Grid2 size={{ xs: 12, md: 6 }}>
                     <TextField
-                      label="Articles Per Page"
+                      label="SEO Keywords"
                       fullWidth
-                      type="number"
-                      value={settings.articlesPerPage}
-                      onChange={(e) => handleChange("articlesPerPage", parseInt(e.target.value))}
+                      value={settings.seoKeywords}
+                      onChange={(e) => handleChange("seoKeywords", e.target.value)}
+                      helperText="Comma separated keywords."
                     />
                   </Grid2>
                 </Grid2>
               </CardContent>
             </Card>
 
-            {/* Notification Settings */}
+            {/* Social Media Links */}
             <Card sx={{ borderRadius: 3, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
               <CardContent sx={{ p: 3 }}>
                 <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 3 }}>
-                  <NotificationsIcon sx={{ color: "#10b981" }} />
+                  <ShareIcon sx={{ color: "#f59e0b" }} />
                   <Typography variant="h6" fontWeight="bold">
-                    Notification Preferences
+                    Social Media Links
                   </Typography>
                 </Stack>
 
-                <Stack spacing={2}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        Email Notifications
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Receive email updates about your account
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={settings.emailNotifications}
-                      onChange={(e) => handleChange("emailNotifications", e.target.checked)}
-                      color="error"
+                <Grid2 container spacing={2.5}>
+                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      label="Facebook URL"
+                      fullWidth
+                      value={settings.socialLinks.facebook}
+                      onChange={(e) => handleChange("social_facebook", e.target.value)}
                     />
-                  </Box>
-                  <Divider />
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        New Article Alerts
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Get notified when new articles are published
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={settings.newArticleAlerts}
-                      onChange={(e) => handleChange("newArticleAlerts", e.target.checked)}
-                      color="error"
+                  </Grid2>
+                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      label="Twitter / X URL"
+                      fullWidth
+                      value={settings.socialLinks.twitter}
+                      onChange={(e) => handleChange("social_twitter", e.target.value)}
                     />
-                  </Box>
-                  <Divider />
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        Comment Notifications
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Receive alerts for new comments
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={settings.commentNotifications}
-                      onChange={(e) => handleChange("commentNotifications", e.target.checked)}
-                      color="error"
+                  </Grid2>
+                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      label="LinkedIn URL"
+                      fullWidth
+                      value={settings.socialLinks.linkedin}
+                      onChange={(e) => handleChange("social_linkedin", e.target.value)}
                     />
-                  </Box>
-                  <Divider />
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        Weekly Report
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Get weekly analytics summary via email
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={settings.weeklyReport}
-                      onChange={(e) => handleChange("weeklyReport", e.target.checked)}
-                      color="error"
+                  </Grid2>
+                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      label="YouTube URL"
+                      fullWidth
+                      value={settings.socialLinks.youtube}
+                      onChange={(e) => handleChange("social_youtube", e.target.value)}
                     />
-                  </Box>
-                </Stack>
+                  </Grid2>
+                </Grid2>
               </CardContent>
             </Card>
-
-            {/* Display Settings */}
-            <Card sx={{ borderRadius: 3, boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
-              <CardContent sx={{ p: 3 }}>
-                <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 3 }}>
-                  <PaletteIcon sx={{ color: "#f59e0b" }} />
-                  <Typography variant="h6" fontWeight="bold">
-                    Display Settings
-                  </Typography>
-                </Stack>
-
-                <Stack spacing={2}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        Show Author Information
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Display author details on articles
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={settings.showAuthorInfo}
-                      onChange={(e) => handleChange("showAuthorInfo", e.target.checked)}
-                      color="error"
-                    />
-                  </Box>
-                  <Divider />
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        Enable Comments
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Allow readers to comment on articles
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={settings.enableComments}
-                      onChange={(e) => handleChange("enableComments", e.target.checked)}
-                      color="error"
-                    />
-                  </Box>
-                  <Divider />
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <Box>
-                      <Typography variant="body2" fontWeight={600}>
-                        Show Related Articles
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Display related content suggestions
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={settings.showRelatedArticles}
-                      onChange={(e) => handleChange("showRelatedArticles", e.target.checked)}
-                      color="error"
-                    />
-                  </Box>
-                </Stack>
-              </CardContent>
-            </Card>
-
-            {/* Save Button */}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
-              <Button variant="outlined" size="large">
-                Reset to Default
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                size="large"
-                startIcon={<SaveIcon />}
-                onClick={handleSave}
-                sx={{ px: 4 }}
-              >
-                Save Changes
-              </Button>
-            </Box>
           </Stack>
         </Grid2>
       </Grid2>

@@ -8,12 +8,20 @@ export async function generateMetadata({ params, searchParams }) {
   const category = resolvedSearchParams.category || "all-news";
   const formattedCategory = category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ');
   
+  const { getSiteSettings } = await import("@/lib/firestore");
+  const settings = await getSiteSettings();
+  const siteName = settings?.siteName || SITE_NAME;
+  
   return {
     title: `${formattedCategory} News`,
-    description: `Latest news, analysis, and activism reporting on ${formattedCategory} from ${SITE_NAME}.`,
+    description: `Latest news, analysis, and activism reporting on ${formattedCategory} from ${siteName}.`,
     alternates: {
       canonical: `/categories/news?category=${encodeURIComponent(category)}`,
     },
+    openGraph: {
+      title: `${formattedCategory} News | ${siteName}`,
+      description: `Latest news, analysis, and activism reporting on ${formattedCategory} from ${siteName}.`,
+    }
   };
 }
 

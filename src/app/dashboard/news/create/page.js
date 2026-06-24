@@ -14,20 +14,8 @@ import Image from "next/image";
 import { createNews, getAllSubscribers, getCategories } from "@/lib/firestore";
 import { useEffect } from "react";
 import { subscribeToAuth } from "@/lib/auth-service";
-import dynamic from "next/dynamic";
-import "react-quill-new/dist/quill.snow.css";
-
-const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
-
-const quillModules = {
-  toolbar: [
-    [{ header: [2, 3, 4, false] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["link", "image"],
-    ["clean"],
-  ],
-};
+import CustomEditor from "@/components/ui/CustomEditor/CustomEditor";
+import ImageUpload from "@/components/ui/ImageUpload/ImageUpload";
 
 export default function CreateNews() {
   const router = useRouter();
@@ -84,9 +72,7 @@ export default function CreateNews() {
     setStatus({ type: "", message: "" });
 
     const isAdmin = user.role === "admin";
-    const authorName = isAdmin
-      ? formData.authorName || user.displayName || user.name || "The Brain Editorial Team"
-      : user.displayName || user.name || formData.authorName || "The Brain Writer";
+    const authorName = user.displayName || user.name || "The Brain Editorial Team";
 
     const newArticle = {
       title: formData.title,
@@ -208,7 +194,7 @@ export default function CreateNews() {
                   />
 
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12}>
                       <TextField
                         select fullWidth required label="Category"
                         value={formData.category} onChange={handleChange("category")} sx={fieldSx}
@@ -223,34 +209,26 @@ export default function CreateNews() {
                         ))}
                       </TextField>
                     </Grid>
+                  </Grid>
+
+                  <Grid container spacing={3}>
                     <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth required label="Author Name"
-                        value={user?.role === "admin" ? formData.authorName : (user?.displayName || user?.name || formData.authorName)}
-                        onChange={handleChange("authorName")}
-                        disabled={user?.role !== "admin"}
-                        sx={fieldSx}
+                      <ImageUpload
+                        label="Thumbnail Image (Square)"
+                        folder="articles/thumbnails"
+                        value={formData.thumbnail_url}
+                        onChange={(url) => setFormData({ ...formData, thumbnail_url: url })}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <ImageUpload
+                        label="Banner Image (16:9)"
+                        folder="articles/banners"
+                        value={formData.imageUrl}
+                        onChange={(url) => setFormData({ ...formData, imageUrl: url })}
                       />
                     </Grid>
                   </Grid>
-
-                  <TextField
-                    fullWidth label="Thumbnail Image URL"
-                    placeholder="https://example.com/image.jpg (optional)"
-                    value={formData.thumbnail_url} onChange={handleChange("thumbnail_url")} sx={fieldSx}
-                    InputProps={{
-                      startAdornment: <ImageIcon sx={{ color: "#94a3b8", mr: 1, fontSize: 20 }} />,
-                    }}
-                  />
-
-                  <TextField
-                    fullWidth label="Banner Image URL"
-                    placeholder="https://example.com/banner.jpg (optional)"
-                    value={formData.imageUrl} onChange={handleChange("imageUrl")} sx={fieldSx}
-                    InputProps={{
-                      startAdornment: <ImageIcon sx={{ color: "#94a3b8", mr: 1, fontSize: 20 }} />,
-                    }}
-                  />
 
                   <Box sx={{
                     "& .quill": { bgcolor: "white", borderRadius: 2 },
@@ -258,11 +236,9 @@ export default function CreateNews() {
                     "& .ql-container": { borderBottomLeftRadius: 8, borderBottomRightRadius: 8, borderColor: "#e2e8f0", minHeight: 300, fontSize: "1rem", fontFamily: "'Inter', sans-serif" }
                   }}>
                     <Typography variant="body2" fontWeight={600} sx={{ mb: 1, color: "#475569" }}>Article Content *</Typography>
-                    <ReactQuill
-                      theme="snow"
+                    <CustomEditor
                       value={formData.details}
                       onChange={(val) => setFormData({ ...formData, details: val })}
-                      modules={quillModules}
                       placeholder="Write your article content here..."
                     />
                     <Stack direction="row" justifyContent="flex-end" gap={2} sx={{ mt: 1 }}>

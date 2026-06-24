@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,10 +16,12 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 let auth = null;
 let db = null;
+let storage = null;
 
 try {
   auth = getAuth(app);
   db = getFirestore(app);
+  storage = getStorage(app);
 } catch (error) {
   console.warn("Firebase initialization warning (safe to ignore during build if env vars are missing):", error.message);
 }
@@ -33,4 +36,4 @@ if (typeof window === "undefined") {
   };
 }
 
-export { app, auth, db };
+export { app, auth, db, storage };
