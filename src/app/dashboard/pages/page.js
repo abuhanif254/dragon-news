@@ -20,7 +20,8 @@ const PREDEFINED_PAGES = [
   { slug: "about", title: "About Us", description: "The story behind The Brain." },
   { slug: "contact", title: "Contact Us", description: "How users can reach you." },
   { slug: "privacy-policy", title: "Privacy Policy", description: "Data collection and usage policy." },
-  { slug: "terms", title: "Terms of Service", description: "Rules and terms for users." }
+  { slug: "terms", title: "Terms of Service", description: "Rules and terms for users." },
+  { slug: "cookies", title: "Cookie Policy", description: "Information about cookie usage on the site." }
 ];
 
 export default function PagesDashboard() {
