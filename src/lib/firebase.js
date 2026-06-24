@@ -13,8 +13,15 @@ const firebaseConfig = {
 
 // Initialize Firebase only if it hasn't been initialized
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = getAuth(app);
-const db = getFirestore(app);
+let auth = null;
+let db = null;
+
+try {
+  auth = getAuth(app);
+  db = getFirestore(app);
+} catch (error) {
+  console.warn("Firebase initialization warning (safe to ignore during build if env vars are missing):", error.message);
+}
 
 // Suppress internal Firebase GRPC warnings from crashing the Next.js dev overlay
 if (typeof window === "undefined") {

@@ -29,11 +29,11 @@ const fallbackNews = [
 ];
 
 export const getAllNews = async ({ includeFallback = true } = {}) => {
-  const projectId = db.app.options.projectId;
-  const apiKey = db.app.options.apiKey;
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery?key=${apiKey}`;
-
   try {
+    if (!db) throw new Error("Firebase DB not initialized");
+    const projectId = db.app.options.projectId;
+    const apiKey = db.app.options.apiKey;
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery?key=${apiKey}`;
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
