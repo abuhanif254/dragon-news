@@ -1,0 +1,107 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function adminEmail() {
+      return "mohammadbitullah@gmail.com";
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        request.auth.token.email == adminEmail() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    function isWriter() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "writer";
+    }
+
+    function ownsArticle() {
+      return signedIn() && (
+        resource.data.createdBy == request.auth.uid ||
+        resource.data.author.uid == request.auth.uid ||
+        resource.data.author.email == request.auth.token.email
+      );
+    }
+
+    match /news/{articleId} {
+      allow get: if resource.data.status == "approved" || isAdmin() || ownsArticle();
+      allow list: if isAdmin() ||
+        resource.data.status == "approved" ||
+        (isWriter() && resource.data.createdBy == request.auth.uid);
+      allow create: if isAdmin() || (
+        isWriter() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.status == "pending" &&
+        request.resource.data.author.uid == request.auth.uid
+      );
+      allow update: if isAdmin() || (
+        isWriter() &&
+        ownsArticle() &&
+        resource.data.status != "approved" &&
+        request.resource.data.status == "pending"
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow create: if signedIn() &&
+        userId == request.auth.uid &&
+        request.resource.data.email == request.auth.token.email &&
+        (request.resource.data.role != "admin" || request.auth.token.email == adminEmail());
+      allow get: if signedIn() && (userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      allow update: if signedIn() && (
+        (userId == request.auth.uid &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.email == resource.data.email) ||
+        (isAdmin() &&
+          (request.resource.data.role != "admin" || request.resource.data.email == adminEmail()))
+      );
+      allow delete: if false;
+    }
+
+    match /writerRequests/{userId} {
+      allow create: if signedIn() &&
+        userId == request.auth.uid &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.status == "pending";
+      allow update: if isAdmin() || (
+        signedIn() &&
+        userId == request.auth.uid &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.status == "pending"
+      );
+      allow get: if signedIn() && (userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /authors/{authorId} {
+      allow read: if true;
+      allow write: if isAdmin() || isWriter();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /messages/{messageId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /subscribers/{subscriberId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}

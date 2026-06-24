@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Brand Tokens ─────────────────────────────────────────────────── */
+:root {
+  --brand-red: #c0392b;
+  --brand-red-dark: #96281b;
+  --brand-red-light: #e74c3c;
+  --brand-charcoal: #1a1a2e;
+  --brand-gold: #f39c12;
+  --card-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  --card-shadow-hover: 0 8px 32px rgba(0,0,0,0.14);
+  --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Base ─────────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Selection ────────────────────────────────────────────────────── */
+::selection {
+  background-color: var(--brand-red);
+  color: white;
+}
+
+/* ─── Scrollbar ────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--brand-red);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-red-dark);
+}
+
+/* ─── Card Hover Transitions ───────────────────────────────────────── */
+.news-card {
+  transition: var(--transition-smooth);
+  box-shadow: var(--card-shadow);
+}
+.news-card:hover {
+  box-shadow: var(--card-shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* ─── Reading Progress Bar ─────────────────────────────────────────── */
+#reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-red), var(--brand-gold));
+  z-index: 9999;
+  transition: width 0.1s linear;
+}
+
+/* ─── Marquee Animation ────────────────────────────────────────────── */
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 55s linear infinite;
+  padding-left: 100%;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* ─── Pulse (Live badge) ───────────────────────────────────────────── */
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.live-dot {
+  animation: livePulse 1.2s ease-in-out infinite;
+}
+
+/* ─── Fade-In Up ───────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up {
+  animation: fadeInUp 0.5s ease both;
+}
+
+/* ─── Glassmorphism Helper ─────────────────────────────────────────── */
+.glass {
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* ─── Hero Gradient Overlay ────────────────────────────────────────── */
+.hero-gradient-overlay {
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+}
+
+/* ─── Category Badge ───────────────────────────────────────────────── */
+.cat-badge {
+  display: inline-block;
+  background: var(--brand-red);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 10px;
+  border-radius: 3px;
+}
+
+/* ─── Sidebar Section Header ───────────────────────────────────────── */
+.section-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-red);
+  border-left: 3px solid var(--brand-red);
+  padding-left: 8px;
+  margin-bottom: 12px;
+}
+
+/* ─── Link Reset ───────────────────────────────────────────────────── */
+a {
+  text-decoration: none;
+  color: inherit;
+}
