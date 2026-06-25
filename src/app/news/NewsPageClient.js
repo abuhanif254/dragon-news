@@ -13,6 +13,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import CategoryBadge from "@/components/ui/CategoryBadge/CategoryBadge";
+import { createExcerpt } from "@/lib/content-utils";
 
 export default function NewsPageClient({ allNews = [], error = "" }) {
   return (
@@ -87,7 +88,7 @@ export default function NewsPageClient({ allNews = [], error = "" }) {
                       color="text.secondary"
                       sx={{ WebkitLineClamp: 3, display: "-webkit-box", WebkitBoxOrient: "vertical", overflow: "hidden" }}
                     >
-                      {news.details}
+                      {createExcerpt(news.details, 150)}
                     </Typography>
                   </CardContent>
                 </CardActionArea>

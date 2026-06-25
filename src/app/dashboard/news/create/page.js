@@ -16,6 +16,7 @@ import { useEffect } from "react";
 import { subscribeToAuth } from "@/lib/auth-service";
 import CustomEditor from "@/components/ui/CustomEditor/CustomEditor";
 import ImageUpload from "@/components/ui/ImageUpload/ImageUpload";
+import { createExcerpt } from "@/lib/content-utils";
 
 export default function CreateNews() {
   const router = useRouter();
@@ -308,7 +309,7 @@ export default function CreateNews() {
                   </Typography>
                   <Typography variant="caption" sx={{ color: "#94a3b8", display: "block", mt: 0.5 }}>
                     {formData.details
-                      ? formData.details.slice(0, 120) + (formData.details.length > 120 ? "..." : "")
+                      ? createExcerpt(formData.details, 120)
                       : "Article description will appear here..."
                     }
                   </Typography>

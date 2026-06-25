@@ -16,6 +16,7 @@ export default async function sitemap() {
     ["/contact", "monthly", 0.5],
     ["/privacy-policy", "yearly", 0.3],
     ["/terms", "yearly", 0.3],
+    ["/cookies", "yearly", 0.3],
   ].map(([path, changeFrequency, priority]) => ({
     url: `${SITE_URL}${path}`,
     lastModified: new Date(),

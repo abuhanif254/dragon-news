@@ -12,6 +12,7 @@ import topNews from "@/assets/top-news.png";
 import topNews2 from "@/assets/top-news2.png";
 import Image from "next/image";
 import { getAllNews } from "@/utils/getAllNews";
+import { createExcerpt } from "@/lib/content-utils";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import Link from "next/link";
 
@@ -57,9 +58,7 @@ const LatestNews = ({ allNews: data = [] }) => {
               </Typography>
 
               <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                {mainNews.details?.length > 250
-                  ? mainNews.details.slice(0, 250) + "..."
-                  : mainNews.details}
+                {createExcerpt(mainNews.details, 250)}
               </Typography>
             </CardContent>
           </CardActionArea>
@@ -95,7 +94,7 @@ const LatestNews = ({ allNews: data = [] }) => {
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary" sx={{ WebkitLineClamp: 2, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {news.details}
+                      {createExcerpt(news.details, 120)}
                     </Typography>
                   </CardContent>
                 </CardActionArea>

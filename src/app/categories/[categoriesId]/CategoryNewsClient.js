@@ -11,6 +11,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import CategoryBadge from "@/components/ui/CategoryBadge/CategoryBadge";
+import { createExcerpt } from "@/lib/content-utils";
 
 export default function CategoryNewsClient({ data, category }) {
   return (
@@ -47,7 +48,7 @@ export default function CategoryNewsClient({ data, category }) {
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary" sx={{ WebkitLineClamp: 3, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {news.details}
+                      {createExcerpt(news.details, 150)}
                     </Typography>
                   </CardContent>
                 </CardActionArea>
