@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Box, Card, CardContent, Divider, Stack, Typography, Button, TextField } from "@mui/material";
 import SafeImage from "../SafeImage/SafeImage";
 import SidebarNewsCard from "./SideBarNewsCard";
@@ -8,6 +9,7 @@ import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import SendIcon from "@mui/icons-material/Send";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import { subscribeToNewsletter } from "@/lib/firestore";
 
 const readingTime = (text = "") => {
   const words = text.trim().split(/\s+/).length;
@@ -15,6 +17,34 @@ const readingTime = (text = "") => {
 };
 
 const SideBar = ({ allNews: data = [] }) => {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState({ type: "", content: "" });
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      setMsg({ type: "error", content: "Please enter a valid email." });
+      return;
+    }
+
+    setLoading(true);
+    setMsg({ type: "", content: "" });
+
+    try {
+      const res = await subscribeToNewsletter(email);
+      if (res.status === "exists") {
+        setMsg({ type: "info", content: res.message });
+      } else {
+        setMsg({ type: "success", content: res.message });
+        setEmail("");
+      }
+    } catch (err) {
+      setMsg({ type: "error", content: "Something went wrong. Try again!" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (data.length === 0) return null;
 
@@ -121,12 +151,14 @@ const SideBar = ({ allNews: data = [] }) => {
         <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.7)", display: "block", mb: 2 }}>
           Get top stories delivered every morning.
         </Typography>
-        <Stack gap={1.2}>
+        <Stack gap={1.2} component="form" onSubmit={handleSubscribe}>
           <TextField
             size="small"
             placeholder="your@email.com"
             variant="outlined"
             fullWidth
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             sx={{
               "& .MuiOutlinedInput-root": {
                 backgroundColor: "rgba(255,255,255,0.1)",
@@ -140,8 +172,10 @@ const SideBar = ({ allNews: data = [] }) => {
             }}
           />
           <Button
+            type="submit"
             variant="contained"
             fullWidth
+            disabled={loading}
             endIcon={<SendIcon fontSize="small" />}
             sx={{
               backgroundColor: "white",
@@ -153,8 +187,22 @@ const SideBar = ({ allNews: data = [] }) => {
               "&:hover": { backgroundColor: "rgba(255,255,255,0.9)" },
             }}
           >
-            Subscribe Free
+            {loading ? "Subscribing..." : "Subscribe Free"}
           </Button>
+          {msg.content && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: msg.type === "error" ? "#ff8a80" : msg.type === "info" ? "#90caf9" : "#a5d6a7",
+                fontWeight: 700,
+                display: "block",
+                textAlign: "center",
+                mt: 0.5
+              }}
+            >
+              {msg.content}
+            </Typography>
+          )}
         </Stack>
       </Box>
     </Box>

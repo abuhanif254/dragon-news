@@ -23,7 +23,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import LanguageIcon from "@mui/icons-material/Language";
 import { saveContactMessage } from "@/lib/firestore";
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
 
 const OFFICE_SCHEDULE = [
   { day: "Monday – Friday", hours: "9:00 AM – 6:00 PM" },

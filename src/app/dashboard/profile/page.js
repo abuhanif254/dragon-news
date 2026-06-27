@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   Box, Typography, Card, CardContent, TextField, Button, 
   Stack, Grid, Avatar, Alert, Divider, Chip, IconButton,
-  InputAdornment, Paper
+  InputAdornment, Paper, Switch, FormControlLabel
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import TwitterIcon from "@mui/icons-material/Twitter";
@@ -11,6 +11,7 @@ import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import PublicIcon from "@mui/icons-material/Public";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import { getAuthorProfile, saveAuthorProfile } from "@/lib/firestore";
+import Link from "next/link";
 
 import { subscribeToAuth } from "@/lib/auth-service";
 
@@ -28,6 +29,27 @@ export default function EditProfilePage() {
     expertise: "",
     social: { twitter: "", linkedin: "", website: "" }
   });
+  
+  const [preferences, setPreferences] = useState({
+    weeklySummary: true,
+    breakingAlerts: true,
+    commentReplies: false,
+  });
+
+  const [readingHistory, setReadingHistory] = useState([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("reading_history");
+      if (saved) {
+        try {
+          setReadingHistory(JSON.parse(saved));
+        } catch (err) {
+          console.error("Error reading history from storage:", err);
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuth((u) => {
@@ -35,10 +57,27 @@ export default function EditProfilePage() {
         setUser(u);
         setProfile(prev => ({ ...prev, name: u.displayName || u.name || "" }));
         fetchProfile(u.displayName || u.name);
+        fetchUserPreferences(u.uid);
       }
     });
     return () => unsubscribe();
   }, []);
+
+  const fetchUserPreferences = async (uid) => {
+    try {
+      const { getUserDoc } = await import("@/lib/firestore");
+      const uDoc = await getUserDoc(uid);
+      if (uDoc && uDoc.preferences) {
+        setPreferences({
+          weeklySummary: uDoc.preferences.weeklySummary !== false,
+          breakingAlerts: uDoc.preferences.breakingAlerts !== false,
+          commentReplies: uDoc.preferences.commentReplies === true,
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching user preferences:", err);
+    }
+  };
 
   const fetchProfile = async (name) => {
     if (!name) return;
@@ -65,15 +104,23 @@ export default function EditProfilePage() {
     setMsg({ type: "", content: "" });
 
     try {
-      const dataToSave = {
-        ...profile,
-        expertise: profile.expertise.split(",").map(s => s.trim()).filter(Boolean),
-        updatedAt: new Date().toISOString()
-      };
+      if (user.role === "admin" || user.role === "writer") {
+        const dataToSave = {
+          ...profile,
+          expertise: profile.expertise.split(",").map(s => s.trim()).filter(Boolean),
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Save using the specific doc ID (either existing or generated)
+        await saveAuthorProfile(profile.id, dataToSave);
+      }
       
-      // Save using the specific doc ID (either existing or generated)
-      await saveAuthorProfile(profile.id, dataToSave);
-      setMsg({ type: "success", content: "Professional profile updated successfully! Your E-E-A-T signals are now live." });
+      const { updateUserDoc } = await import("@/lib/firestore");
+      await updateUserDoc(user.uid, {
+        preferences: preferences
+      });
+
+      setMsg({ type: "success", content: "Professional profile and subscription preferences updated successfully!" });
     } catch (err) {
       setMsg({ type: "error", content: "Failed to save profile. Please try again." });
     } finally {
@@ -245,6 +292,62 @@ export default function EditProfilePage() {
               </Typography>
             </Card>
 
+            {/* Newsletter Preferences Card */}
+            <Card sx={{ borderRadius: 4, border: "1px solid #e2e8f0", boxShadow: "none", p: 3 }}>
+              <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 2.5, color: "#64748b", textTransform: "uppercase" }}>
+                Subscription Preferences
+              </Typography>
+              <Stack spacing={2}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={preferences.weeklySummary}
+                      onChange={(e) => setPreferences({ ...preferences, weeklySummary: e.target.checked })}
+                      color="error"
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={700}>Weekly Digest</Typography>
+                      <Typography variant="caption" color="text.secondary">Curated stories every Sunday.</Typography>
+                    </Box>
+                  }
+                />
+                <Divider />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={preferences.breakingAlerts}
+                      onChange={(e) => setPreferences({ ...preferences, breakingAlerts: e.target.checked })}
+                      color="error"
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={700}>Breaking News</Typography>
+                      <Typography variant="caption" color="text.secondary">Instant email alerts for hot stories.</Typography>
+                    </Box>
+                  }
+                />
+                <Divider />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={preferences.commentReplies}
+                      onChange={(e) => setPreferences({ ...preferences, commentReplies: e.target.checked })}
+                      color="error"
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={700}>Activity Alerts</Typography>
+                      <Typography variant="caption" color="text.secondary">Get emails when comments are replied to.</Typography>
+                    </Box>
+                  }
+                />
+              </Stack>
+            </Card>
+
             <Paper variant="outlined" sx={{ p: 3, borderRadius: 4, bgcolor: "rgba(192,57,43,0.02)", borderColor: "rgba(192,57,43,0.1)" }}>
               <Typography variant="subtitle2" fontWeight={800} color="error" sx={{ mb: 1.5, display: "flex", alignItems: "center", gap: 1 }}>
                 <VerifiedIcon fontSize="small" /> E-E-A-T Optimization
@@ -253,6 +356,48 @@ export default function EditProfilePage() {
                 Your profile details are used by Google to determine the authority of your reporting. Ensure your bio highlights your unique experience and expertise in your niche.
               </Typography>
             </Paper>
+
+            {/* Reading History Card */}
+            <Card sx={{ borderRadius: 4, border: "1px solid #e2e8f0", boxShadow: "none", p: 3 }}>
+              <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 2.5, color: "#64748b", textTransform: "uppercase" }}>
+                Recently Viewed Articles
+              </Typography>
+              {readingHistory.length === 0 ? (
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                  Your reading history is empty. As you view articles, they will appear here.
+                </Typography>
+              ) : (
+                <Stack spacing={2}>
+                  {readingHistory.map((item, idx) => (
+                    <Box key={item.id || idx}>
+                      <Link href={`/news/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                        <Typography 
+                          variant="body2" 
+                          fontWeight={700} 
+                          sx={{ 
+                            "&:hover": { color: "#c0392b" },
+                            display: "-webkit-box",
+                            WebkitLineClamp: 1,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                            cursor: "pointer"
+                          }}
+                        >
+                          {item.title}
+                        </Typography>
+                      </Link>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }}>
+                        <Chip label={item.category} size="small" sx={{ height: 16, fontSize: "0.6rem", fontWeight: 700, bgcolor: "rgba(0,0,0,0.04)" }} />
+                        <Typography variant="caption" color="text.secondary">
+                          by {item.authorName}
+                        </Typography>
+                      </Stack>
+                      {idx < readingHistory.length - 1 && <Divider sx={{ mt: 1.5 }} />}
+                    </Box>
+                  ))}
+                </Stack>
+              )}
+            </Card>
           </Stack>
         </Grid>
       </Grid>

@@ -10,6 +10,7 @@ import {
   Typography,
   Avatar,
   Button,
+  LinearProgress,
 } from "@mui/material";
 import SafeImage from "@/components/ui/SafeImage/SafeImage";
 import Link from "next/link";
@@ -20,21 +21,128 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ReadingProgressBar from "@/components/ui/ReadingProgressBar/ReadingProgressBar";
 import ShareButtons from "@/components/ui/ShareButtons/ShareButtons";
 import VerifiedIcon from "@mui/icons-material/Verified";
-import DOMPurify from "isomorphic-dompurify";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-
-// Ensure all links open in a new tab securely
-DOMPurify.addHook("afterSanitizeAttributes", function (node) {
-  if (node.tagName === "A") {
-    node.setAttribute("target", "_blank");
-    node.setAttribute("rel", "noopener noreferrer");
-  }
-});
+import RichTextRenderer from "@/components/shared/RichTextRenderer";
+import TableOfContents from "@/components/ui/TableOfContents/TableOfContents";
+import FontSizeControl from "@/components/ui/FontSizeControl/FontSizeControl";
+import ArticleReactions from "@/components/ui/ArticleReactions/ArticleReactions";
+import AuthorCard from "@/components/ui/AuthorCard/AuthorCard";
+import RelatedArticles from "@/components/ui/RelatedArticles/RelatedArticles";
+import CommentsSection from "@/components/ui/CommentsSection/CommentsSection";
+import AudioNarrator from "@/components/ui/AudioNarrator/AudioNarrator";
+import { useState, useEffect } from "react";
+import { subscribeToAuth } from "@/lib/auth-service";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
+import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 
 const readingTime = (text = "") =>
   Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
 
 export default function NewsDetailClient({ news, related }) {
+  const [fontSize, setFontSize] = useState(1);
+  const [fontFamily, setFontFamily] = useState("sans-serif");
+  const [user, setUser] = useState(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [votedOption, setVotedOption] = useState("");
+  const [pollData, setPollData] = useState(news.poll || null);
+  const [voting, setVoting] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && news.poll) {
+      const saved = localStorage.getItem(`poll_${news.id || news._id}`);
+      if (saved) {
+        setHasVoted(true);
+        setVotedOption(saved);
+      }
+    }
+  }, [news]);
+
+  const handleVote = async (optionKey) => {
+    if (voting) return;
+    setVoting(true);
+    try {
+      const { submitPollVote } = await import("@/lib/firestore");
+      const success = await submitPollVote(news.id || news._id, optionKey);
+      if (success) {
+        localStorage.setItem(`poll_${news.id || news._id}`, optionKey);
+        setHasVoted(true);
+        setVotedOption(optionKey);
+        setPollData((prev) => {
+          if (!prev) return null;
+          const updatedOptions = { ...prev.options };
+          if (updatedOptions[optionKey]) {
+            updatedOptions[optionKey] = {
+              ...updatedOptions[optionKey],
+              votes: (updatedOptions[optionKey].votes || 0) + 1
+            };
+          }
+          return { ...prev, options: updatedOptions };
+        });
+      }
+    } catch (err) {
+      console.error("Poll vote error:", err);
+    } finally {
+      setVoting(false);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = subscribeToAuth(async (u) => {
+      setUser(u);
+      if (u) {
+        try {
+          const { getUserBookmarks } = await import("@/lib/firestore");
+          const bookmarks = await getUserBookmarks(u.uid);
+          setIsBookmarked(bookmarks.includes(news.id || news._id));
+        } catch (err) {
+          console.error("Error reading bookmarks:", err);
+        }
+      } else {
+        setIsBookmarked(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [news.id, news._id]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && news) {
+      try {
+        const history = JSON.parse(localStorage.getItem("reading_history") || "[]");
+        const newItem = {
+          id: news.id || news._id,
+          title: news.title || "Untitled",
+          category: news.category || "General",
+          authorName: news.author?.name || "The Brain Editorial Team",
+          thumbnail_url: news.thumbnail_url || news.image_url || "",
+          viewedAt: new Date().toISOString(),
+        };
+        const filtered = [newItem, ...history.filter(h => h.id !== newItem.id)].slice(0, 5);
+        localStorage.setItem("reading_history", JSON.stringify(filtered));
+      } catch (err) {
+        console.error("Error updating reading history:", err);
+      }
+    }
+  }, [news]);
+
+  const handleBookmarkToggle = async () => {
+    if (!user) {
+      window.location.href = "/login";
+      return;
+    }
+    setBookmarkLoading(true);
+    try {
+      const { toggleBookmark } = await import("@/lib/firestore");
+      const bookmarked = await toggleBookmark(user.uid, news.id || news._id);
+      setIsBookmarked(bookmarked);
+    } catch (error) {
+      console.error("Error toggling bookmark:", error);
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
+
   if (!news) return null;
 
   return (
@@ -124,11 +232,30 @@ export default function NewsDetailClient({ news, related }) {
       </Box>
 
       {/* ── Main Layout Grid ── */}
-      <Grid container spacing={{ xs: 4, md: 6 }}>
+      <Grid container spacing={{ xs: 4, md: 6 }} sx={{ position: "relative" }}>
         
         {/* Left Column: Article Content */}
         <Grid item xs={12} md={8}>
-          <Box component="article" sx={{ pr: { md: 2 } }}>
+          <Box component="article" sx={{ pr: { md: 2 }, pl: { lg: 10 }, position: "relative" }}>
+            
+            {/* Floating Share Bar (Desktop Left Side - Inside reserved padding) */}
+            <Box className="no-print" sx={{ 
+              display: { xs: "none", lg: "flex" }, 
+              position: "absolute", 
+              left: 0, 
+              top: 0,
+              height: "100%",
+              zIndex: 10 
+            }}>
+              <Box sx={{ position: "sticky", top: 150, height: "fit-content" }}>
+                <Stack direction="column" gap={1.5} alignItems="center">
+                  <Typography variant="caption" fontWeight={800} color="text.secondary" sx={{ textTransform: "uppercase", writingMode: "vertical-rl", transform: "rotate(180deg)", mb: 1, letterSpacing: "0.1em" }}>
+                    Share
+                  </Typography>
+                  <ShareButtons title={news.title} direction="column" />
+                </Stack>
+              </Box>
+            </Box>
             {/* Meta Bar */}
             <Stack
               direction={{ xs: "column", sm: "row" }}
@@ -180,33 +307,159 @@ export default function NewsDetailClient({ news, related }) {
                   </Stack>
                 )}
               </Stack>
-            </Stack>
-
-            {/* Rich Text Body */}
-            <Box sx={{ maxWidth: "100%", overflow: "hidden", wordBreak: "break-word" }}>
-              {news.details && news.details.includes("<") && news.details.includes(">") ? (
-                <Box
-                  className="article-prose"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(news.details, { ADD_ATTR: ['target'] }) }}
+              
+              <Stack direction="row" alignItems="center" gap={2} className="no-print">
+                <Button
+                  onClick={handleBookmarkToggle}
+                  disabled={bookmarkLoading}
+                  variant={isBookmarked ? "contained" : "outlined"}
+                  color="error"
+                  size="small"
+                  startIcon={isBookmarked ? <BookmarkIcon /> : <BookmarkBorderIcon />}
                   sx={{
-                    "& img": { borderRadius: 3, boxShadow: "0 8px 24px rgba(0,0,0,0.08)", my: 4 },
-                    "& blockquote": { 
-                      borderLeft: "4px solid #c0392b", 
-                      pl: 3, 
-                      py: 1, 
-                      my: 4, 
-                      bgcolor: "rgba(192,57,43,0.03)", 
-                      fontStyle: "italic", 
-                      fontSize: "1.2rem",
-                      color: "text.primary" 
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    textTransform: "none",
+                    borderColor: isBookmarked ? "transparent" : "rgba(192, 57, 43, 0.4)",
+                    color: isBookmarked ? "white" : "var(--brand-red)",
+                    "&:hover": {
+                      borderColor: "var(--brand-red)",
+                      backgroundColor: isBookmarked ? "var(--brand-red-dark)" : "rgba(192, 57, 43, 0.04)",
                     }
                   }}
-                />
+                >
+                  {isBookmarked ? "Bookmarked" : "Bookmark"}
+                </Button>
+                <Button
+                  onClick={() => window.print()}
+                  variant="outlined"
+                  color="inherit"
+                  size="small"
+                  sx={{
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    textTransform: "none",
+                    borderColor: "rgba(0,0,0,0.12)",
+                    "&:hover": {
+                      borderColor: "text.primary",
+                      backgroundColor: "rgba(0,0,0,0.04)"
+                    }
+                  }}
+                >
+                  Print
+                </Button>
+                <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                  <FontSizeControl fontSize={fontSize} setFontSize={setFontSize} fontFamily={fontFamily} setFontFamily={setFontFamily} />
+                </Box>
+              </Stack>
+            </Stack>
+
+            {/* Audio Narrator */}
+            <Box className="no-print">
+              <AudioNarrator text={news.details} />
+            </Box>
+
+            {/* Rich Text Body */}
+            <Box sx={{ 
+              maxWidth: "100%", 
+              overflow: "hidden", 
+              wordBreak: "break-word", 
+              fontSize: `${fontSize}rem`,
+              fontFamily: fontFamily === "serif" ? "'Playfair Display', 'Georgia', serif" : "'Inter', 'Roboto', sans-serif"
+            }}>
+              {news.details && news.details.includes("<") && news.details.includes(">") ? (
+                <RichTextRenderer content={news.details} />
               ) : (
                 <Box className="article-prose legacy-content">
                   {news.details}
                 </Box>
               )}
+            </Box>
+
+            {/* Poll Widget */}
+            {pollData && (
+              <Card sx={{ my: 4, borderRadius: 3, border: "1px solid", borderColor: "divider", boxShadow: "none", bgcolor: "rgba(192, 57, 43, 0.02)" }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Typography variant="overline" fontWeight={800} color="error" sx={{ letterSpacing: "0.08em", display: "block", mb: 1.5 }}>
+                    Dragon Reader Poll
+                  </Typography>
+                  <Typography variant="h6" fontWeight={800} sx={{ color: "text.primary", mb: 3 }}>
+                    {pollData.question}
+                  </Typography>
+
+                  {hasVoted ? (
+                    <Stack spacing={2.5}>
+                      {Object.entries(pollData.options || {}).map(([key, opt]) => {
+                        const totalVotes = Object.values(pollData.options || {}).reduce((sum, o) => sum + (o.votes || 0), 0) || 1;
+                        const pct = Math.round(((opt.votes || 0) / totalVotes) * 100);
+                        const isUserChoice = votedOption === key;
+
+                        return (
+                          <Box key={key}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                              <Typography variant="body2" fontWeight={isUserChoice ? 700 : 500} color={isUserChoice ? "error.main" : "text.primary"}>
+                                {opt.text} {isUserChoice && " (Your vote)"}
+                              </Typography>
+                              <Typography variant="caption" fontWeight={700}>
+                                {pct}% ({opt.votes || 0})
+                              </Typography>
+                            </Stack>
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={pct} 
+                              color={isUserChoice ? "error" : "inherit"}
+                              sx={{ height: 6, borderRadius: 3, bgcolor: "action.hover" }}
+                            />
+                          </Box>
+                        );
+                      })}
+                    </Stack>
+                  ) : (
+                    <Stack spacing={1.5}>
+                      {Object.entries(pollData.options || {}).map(([key, opt]) => (
+                        <Button
+                          key={key}
+                          variant="outlined"
+                          color="inherit"
+                          onClick={() => handleVote(key)}
+                          disabled={voting}
+                          sx={{
+                            justifyContent: "flex-start",
+                            textTransform: "none",
+                            borderRadius: 2.5,
+                            py: 1.2,
+                            px: 3,
+                            fontWeight: 700,
+                            border: "1px solid",
+                            borderColor: "divider",
+                            "&:hover": {
+                              borderColor: "error.main",
+                              bgcolor: "rgba(192, 57, 43, 0.04)"
+                            }
+                          }}
+                        >
+                          {opt.text}
+                        </Button>
+                      ))}
+                    </Stack>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Reactions */}
+            <Box className="no-print">
+              <ArticleReactions articleId={news.id || news._id} initialReactions={news.reactions} />
+            </Box>
+
+            {/* Comments Section */}
+            <Box className="no-print">
+              <CommentsSection articleId={news.id || news._id} />
+            </Box>
+
+            {/* Related Articles (Moved to Article Bottom) */}
+            <Box className="no-print" sx={{ mt: 6, pt: 4, borderTop: "1px solid", borderColor: "divider" }}>
+              <RelatedArticles related={related} />
             </Box>
 
             {/* Sources & Citations */}
@@ -231,7 +484,7 @@ export default function NewsDetailClient({ news, related }) {
               </Box>
             )}
             
-            <Box sx={{ display: { xs: "block", md: "none" }, mt: 4 }}>
+            <Box className="no-print" sx={{ display: { xs: "block", md: "none" }, mt: 4 }}>
               <Divider sx={{ mb: 3 }} />
               <ShareButtons title={news.title} />
             </Box>
@@ -239,106 +492,26 @@ export default function NewsDetailClient({ news, related }) {
         </Grid>
 
         {/* Right Column: Sticky Sidebar */}
-        <Grid item xs={12} md={4}>
-          <Box sx={{ position: "sticky", top: 100 }}>
+        <Grid item xs={12} md={4} className="no-print">
+          <Stack spacing={4} sx={{ position: "sticky", top: 100, width: "100%" }}>
+            
+            {/* Table of Contents */}
+            {news.details && news.details.includes("<h") && (
+              <Box sx={{ display: { xs: "none", md: "block" }, width: "100%" }}>
+                <TableOfContents htmlContent={news.details} />
+              </Box>
+            )}
             
             {/* Author Box */}
-            <Card elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", mb: 4, overflow: "visible" }}>
-              <Box sx={{ h: 60, bgcolor: "rgba(192,57,43,0.05)", borderBottom: "1px solid", borderColor: "divider", p: 2 }}>
-                <Typography variant="overline" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.1em" }}>Written By</Typography>
-              </Box>
-              <CardContent sx={{ pt: 4, px: 3, pb: 3, position: "relative" }}>
-                <Link href={`/authors/${encodeURIComponent(news.author?.name)}`}>
-                  <Avatar
-                    src={news.author?.img}
-                    alt={news.author?.name}
-                    sx={{ 
-                      width: 72, height: 72, 
-                      border: "4px solid", borderColor: "background.paper", 
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                      position: "absolute", top: -36, left: 24,
-                      cursor: "pointer", transition: "transform 0.2s",
-                      "&:hover": { transform: "scale(1.05)" }
-                    }}
-                  />
-                </Link>
-                <Link href={`/authors/${encodeURIComponent(news.author?.name)}`}>
-                  <Typography variant="h6" fontWeight={800} sx={{ mt: 2, mb: 1, fontFamily: "'Playfair Display', serif", "&:hover": { color: "#c0392b" } }}>
-                    {news.author?.name}
-                  </Typography>
-                </Link>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
-                  Contributor at The Brain. Covering topics in {news.category} and bringing insightful analysis to our readers.
-                </Typography>
-                <Link href={`/authors/${encodeURIComponent(news.author?.name)}`}>
-                  <Button variant="outlined" color="error" fullWidth sx={{ borderRadius: 2, textTransform: "none", fontWeight: 700 }}>
-                    View Profile
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+            <AuthorCard author={news.author} category={news.category} />
 
-            {/* Share Buttons (Desktop) */}
-            <Box sx={{ display: { xs: "none", md: "block" }, mb: 4 }}>
+            {/* Share Buttons (Mobile/Tablet only, hidden on large desktop where floating bar is) */}
+            <Box sx={{ display: { xs: "block", lg: "none" }, mb: 4 }}>
               <Typography variant="overline" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.1em", display: "block", mb: 2 }}>Share Article</Typography>
               <ShareButtons title={news.title} />
             </Box>
 
-            {/* Related Articles */}
-            {related.length > 0 && (
-              <Box>
-                <Typography variant="overline" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.1em", display: "block", mb: 2 }}>Related Reads</Typography>
-                <Stack spacing={3}>
-                  {related.map((rel) => (
-                    <Link key={rel.id || rel._id} href={`/news/${rel.id || rel._id}`}>
-                      <Stack direction="row" gap={2} sx={{ 
-                        group: true, 
-                        cursor: "pointer",
-                        "&:hover .rel-title": { color: "#c0392b" },
-                        "&:hover .rel-img": { transform: "scale(1.08)" }
-                      }}>
-                        <Box sx={{ width: 100, height: 75, flexShrink: 0, borderRadius: 2, overflow: "hidden", position: "relative" }}>
-                          <SafeImage
-                            className="rel-img"
-                            src={rel.thumbnail_url || rel.image_url}
-                            fallback="https://picsum.photos/400/300"
-                            fill
-                            unoptimized
-                            alt={rel.title}
-                            sizes="100px"
-                            style={{ objectFit: "cover", transition: "transform 0.4s ease" }}
-                          />
-                        </Box>
-                        <Box>
-                          <Typography
-                            className="rel-title"
-                            variant="subtitle2"
-                            fontWeight={800}
-                            sx={{
-                              fontFamily: "'Playfair Display', serif",
-                              lineHeight: 1.3,
-                              display: "-webkit-box",
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: "vertical",
-                              overflow: "hidden",
-                              transition: "color 0.2s",
-                              mb: 0.5
-                            }}
-                          >
-                            {rel.title}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            {rel.author?.published_date}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Link>
-                  ))}
-                </Stack>
-              </Box>
-            )}
-
-          </Box>
+          </Stack>
         </Grid>
       </Grid>
     </Box>

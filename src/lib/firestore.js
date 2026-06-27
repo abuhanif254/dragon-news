@@ -12,6 +12,8 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { normalizeArticle } from "@/lib/content-utils";
 
@@ -194,6 +196,40 @@ export async function incrementViews(id) {
     }
   } catch (error) {
     // Silent fail in production to avoid blocking the UI
+  }
+}
+
+// Increment article emoji reactions
+export async function incrementReaction(id, reactionId, incrementBy = 1) {
+  const projectId = db.app.options.projectId;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        writes: [
+          {
+            transform: {
+              document: `projects/${projectId}/databases/(default)/documents/news/${id}`,
+              fieldTransforms: [
+                {
+                  fieldPath: `reactions.${reactionId}`,
+                  increment: { integerValue: incrementBy }
+                }
+              ]
+            }
+          }
+        ]
+      })
+    });
+
+    if (res.ok) {
+      console.log(`Reaction ${reactionId} incremented by ${incrementBy} for article: ${id}`);
+    }
+  } catch (error) {
+    console.error("Error updating reaction:", error);
   }
 }
 
@@ -521,3 +557,379 @@ export const savePage = async (slug, pageData) => {
     throw error;
   }
 };
+
+// USER BOOKMARKS MANAGEMENT
+export const getUserBookmarks = async (userId) => {
+  if (!db || !userId) return [];
+  try {
+    const userDocRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userDocRef);
+    if (userSnap.exists()) {
+      return userSnap.data().bookmarks || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Error getting user bookmarks:", error);
+    return [];
+  }
+};
+
+export const toggleBookmark = async (userId, articleId) => {
+  if (!db || !userId || !articleId) throw new Error("Missing required parameters to toggle bookmark");
+  try {
+    const userDocRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userDocRef);
+    const currentBookmarks = userSnap.exists() ? (userSnap.data().bookmarks || []) : [];
+    const isBookmarked = currentBookmarks.includes(articleId);
+
+    if (isBookmarked) {
+      await updateDoc(userDocRef, {
+        bookmarks: arrayRemove(articleId),
+        updatedAt: serverTimestamp(),
+      });
+      return false; // Not bookmarked now
+    } else {
+      await updateDoc(userDocRef, {
+        bookmarks: arrayUnion(articleId),
+        updatedAt: serverTimestamp(),
+      });
+      return true; // Bookmarked now
+    }
+  } catch (error) {
+    console.error("Error toggling bookmark:", error);
+    throw error;
+  }
+};
+
+// COMMENTS MANAGEMENT
+export const addComment = async (articleId, user, content, parentId = null) => {
+  if (!db || !articleId || !user || !content.trim()) {
+    throw new Error("Missing required parameters for adding a comment");
+  }
+  try {
+    const commentsCollection = collection(db, "comments");
+    const docRef = await addDoc(commentsCollection, {
+      articleId,
+      userId: user.uid,
+      authorName: user.displayName || user.name || "Anonymous Reader",
+      photo: user.photoURL || user.photo || "",
+      content: content.trim(),
+      flaggedCount: 0,
+      timestamp: serverTimestamp(),
+      parentId,
+    });
+    return {
+      id: docRef.id,
+      articleId,
+      userId: user.uid,
+      authorName: user.displayName || user.name || "Anonymous Reader",
+      photo: user.photoURL || user.photo || "",
+      content: content.trim(),
+      flaggedCount: 0,
+      timestamp: new Date().toISOString(),
+      parentId,
+    };
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    throw error;
+  }
+};
+
+export const getCommentsByArticle = async (articleId) => {
+  if (!db || !articleId) return [];
+  try {
+    const commentsCollection = collection(db, "comments");
+    const q = query(commentsCollection, where("articleId", "==", articleId));
+    const querySnapshot = await getDocs(q);
+    const comments = querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      let ts = new Date().toISOString();
+      if (data.timestamp) {
+        if (typeof data.timestamp.toDate === "function") {
+          ts = data.timestamp.toDate().toISOString();
+        } else if (typeof data.timestamp === "string") {
+          ts = data.timestamp;
+        } else if (data.timestamp.seconds) {
+          ts = new Date(data.timestamp.seconds * 1000).toISOString();
+        }
+      }
+      return {
+        id: doc.id,
+        ...data,
+        timestamp: ts,
+      };
+    });
+    // Sort ascending by timestamp in memory
+    return comments.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  } catch (error) {
+    console.error("Error getting comments by article:", error);
+    return [];
+  }
+};
+
+export const flagComment = async (commentId) => {
+  if (!db || !commentId) throw new Error("Missing comment ID");
+  try {
+    const commentDocRef = doc(db, "comments", commentId);
+    const commentSnap = await getDoc(commentDocRef);
+    if (commentSnap.exists()) {
+      const nextFlags = (commentSnap.data().flaggedCount || 0) + 1;
+      await updateDoc(commentDocRef, { flaggedCount: nextFlags });
+      return nextFlags;
+    }
+    return 0;
+  } catch (error) {
+    console.error("Error flagging comment:", error);
+    throw error;
+  }
+};
+
+export const deleteComment = async (commentId) => {
+  if (!db || !commentId) throw new Error("Missing comment ID");
+  try {
+    const commentDocRef = doc(db, "comments", commentId);
+    await deleteDoc(commentDocRef);
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    throw error;
+  }
+};
+
+export const getFlaggedComments = async () => {
+  if (!db) return [];
+  try {
+    const commentsCollection = collection(db, "comments");
+    const q = query(commentsCollection, where("flaggedCount", ">=", 1));
+    const querySnapshot = await getDocs(q);
+    const comments = querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      let ts = new Date().toISOString();
+      if (data.timestamp) {
+        if (typeof data.timestamp.toDate === "function") {
+          ts = data.timestamp.toDate().toISOString();
+        } else if (typeof data.timestamp === "string") {
+          ts = data.timestamp;
+        } else if (data.timestamp.seconds) {
+          ts = new Date(data.timestamp.seconds * 1000).toISOString();
+        }
+      }
+      return {
+        id: doc.id,
+        ...data,
+        timestamp: ts,
+      };
+    });
+    return comments.sort((a, b) => b.flaggedCount - a.flaggedCount);
+  } catch (error) {
+    console.error("Error getting flagged comments:", error);
+    return [];
+  }
+};
+
+export const getAllComments = async () => {
+  if (!db) return [];
+  try {
+    const commentsCollection = collection(db, "comments");
+    const q = query(commentsCollection, orderBy("timestamp", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      let ts = new Date().toISOString();
+      if (data.timestamp) {
+        if (typeof data.timestamp.toDate === "function") {
+          ts = data.timestamp.toDate().toISOString();
+        } else if (typeof data.timestamp === "string") {
+          ts = data.timestamp;
+        } else if (data.timestamp.seconds) {
+          ts = new Date(data.timestamp.seconds * 1000).toISOString();
+        }
+      }
+      return {
+        id: doc.id,
+        ...data,
+        timestamp: ts,
+      };
+    });
+  } catch (error) {
+    console.error("Error getting all comments:", error);
+    return [];
+  }
+};
+
+export const clearCommentFlags = async (commentId) => {
+  if (!db || !commentId) throw new Error("Missing comment ID");
+  try {
+    const commentDocRef = doc(db, "comments", commentId);
+    await updateDoc(commentDocRef, { flaggedCount: 0 });
+    return { success: true };
+  } catch (error) {
+    console.error("Error clearing comment flags:", error);
+    throw error;
+  }
+};
+
+export const getUserDoc = async (uid) => {
+  if (!db || !uid) return null;
+  try {
+    const docRef = doc(db, "users", uid);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data();
+    }
+    return null;
+  } catch (error) {
+    console.error("Error getting user doc:", error);
+    return null;
+  }
+};
+
+export const updateUserDoc = async (uid, data) => {
+  if (!db || !uid) return false;
+  try {
+    const docRef = doc(db, "users", uid);
+    await updateDoc(docRef, data);
+    return true;
+  } catch (error) {
+    console.error("Error updating user doc:", error);
+    throw error;
+  }
+};
+
+// ARTICLE REVISION HISTORY
+export async function createNewsRevision(newsId, revisionData) {
+  try {
+    const revisionsCol = collection(db, "news", newsId, "revisions");
+    const docRef = await addDoc(revisionsCol, {
+      ...revisionData,
+      createdAt: serverTimestamp()
+    });
+    return { id: docRef.id, ...revisionData };
+  } catch (error) {
+    console.error("Error creating news revision:", error);
+    throw error;
+  }
+}
+
+export async function getNewsRevisions(newsId) {
+  try {
+    const revisionsCol = collection(db, "news", newsId, "revisions");
+    const q = query(revisionsCol, orderBy("createdAt", "desc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      let ts = new Date().toISOString();
+      if (data.createdAt) {
+        if (typeof data.createdAt.toDate === "function") {
+          ts = data.createdAt.toDate().toISOString();
+        } else if (data.createdAt.seconds) {
+          ts = new Date(data.createdAt.seconds * 1000).toISOString();
+        }
+      }
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: ts
+      };
+    });
+  } catch (error) {
+    console.error("Error getting news revisions:", error);
+    return [];
+  }
+}
+
+// LIVE NOTIFICATIONS ENGINE
+export async function getNotificationsForUser(user) {
+  if (!db || !user) return [];
+  try {
+    const notifications = [];
+
+    // 1. Admin alerts (Pending articles, Flagged comments)
+    if (user.role === "admin") {
+      const newsCol = collection(db, "news");
+      const pendingQuery = query(newsCol, where("status", "==", "pending"));
+      const pendingSnap = await getDocs(pendingQuery);
+      pendingSnap.forEach(doc => {
+        const data = doc.data();
+        notifications.push({
+          id: `pending_${doc.id}`,
+          type: "pending_article",
+          title: "Pending Approval",
+          message: `"${data.title?.slice(0, 30)}..." awaits moderation.`,
+          link: "/dashboard/news",
+          createdAt: data.createdAt ? (data.createdAt.seconds ? new Date(data.createdAt.seconds * 1000).toISOString() : new Date().toISOString()) : new Date().toISOString(),
+        });
+      });
+
+      const commentsCol = collection(db, "comments");
+      const flaggedQuery = query(commentsCol, where("flaggedCount", ">=", 1));
+      const flaggedSnap = await getDocs(flaggedQuery);
+      flaggedSnap.forEach(doc => {
+        const data = doc.data();
+        notifications.push({
+          id: `flagged_${doc.id}`,
+          type: "flagged_comment",
+          title: "Comment Flagged",
+          message: `"${data.content?.slice(0, 30)}..." flagged by a reader.`,
+          link: "/dashboard/messages/comments",
+          createdAt: data.timestamp ? (data.timestamp.seconds ? new Date(data.timestamp.seconds * 1000).toISOString() : new Date().toISOString()) : new Date().toISOString(),
+        });
+      });
+    }
+
+    // 2. Reader comment replies
+    const allCommentsSnap = await getDocs(collection(db, "comments"));
+    const allComments = allCommentsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const userCommentIds = allComments.filter(c => c.userId === user.uid).map(c => c.id);
+
+    allComments.forEach(c => {
+      if (c.parentId && userCommentIds.includes(c.parentId) && c.userId !== user.uid) {
+        notifications.push({
+          id: `reply_${c.id}`,
+          type: "comment_reply",
+          title: "New Reply",
+          message: `${c.authorName} replied: "${c.content?.slice(0, 30)}..."`,
+          link: `/news/${c.articleId}`,
+          createdAt: c.timestamp ? (c.timestamp.seconds ? new Date(c.timestamp.seconds * 1000).toISOString() : new Date().toISOString()) : new Date().toISOString(),
+        });
+      }
+    });
+
+    return notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } catch (error) {
+    console.error("Error loading notifications:", error);
+    return [];
+  }
+}
+
+// POLL WIDGET ENGINE
+export async function submitPollVote(id, optionKey) {
+  const projectId = db.app.options.projectId;
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        writes: [
+          {
+            transform: {
+              document: `projects/${projectId}/databases/(default)/documents/news/${id}`,
+              fieldTransforms: [
+                {
+                  fieldPath: `poll.options.${optionKey}.votes`,
+                  increment: { integerValue: 1 }
+                }
+              ]
+            }
+          }
+        ]
+      })
+    });
+    return res.ok;
+  } catch (error) {
+    console.error("Error submitting poll vote via REST:", error);
+    return false;
+  }
+}

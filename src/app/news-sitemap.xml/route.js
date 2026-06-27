@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAllNews } from "@/utils/getAllNews";
-import { articleUrl, SITE_NAME } from "@/lib/site";
+import { articleUrl, absoluteImage, SITE_NAME } from "@/lib/site";
 import { escapeXml, parseDate, toIsoDate } from "@/lib/content-utils";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const newsResponse = await getAllNews({ includeFallback: false });
   const articles = newsResponse.status ? newsResponse.data : [];
+
+  // Google News Sitemap: only articles published in the last 48 hours
   const twoDaysAgo = Date.now() - 48 * 60 * 60 * 1000;
 
   const entries = articles
@@ -17,9 +19,16 @@ export async function GET() {
     })
     .map((article) => {
       const published = toIsoDate(article.publishedAt || article.author?.published_date);
+      const imageUrl = absoluteImage(article.image_url || article.thumbnail_url);
+      const articleLoc = escapeXml(articleUrl(article));
+      const keywords = [article.category, SITE_NAME].filter(Boolean).join(", ");
+
       return `
   <url>
-    <loc>${escapeXml(articleUrl(article))}</loc>
+    <loc>${articleLoc}</loc>
+    <lastmod>${published}</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.9</priority>
     <news:news>
       <news:publication>
         <news:name>${escapeXml(SITE_NAME)}</news:name>
@@ -27,14 +36,22 @@ export async function GET() {
       </news:publication>
       <news:publication_date>${escapeXml(published)}</news:publication_date>
       <news:title>${escapeXml(article.title)}</news:title>
+      <news:keywords>${escapeXml(keywords)}</news:keywords>
     </news:news>
+    ${imageUrl ? `
+    <image:image>
+      <image:loc>${escapeXml(imageUrl)}</image:loc>
+      <image:caption>${escapeXml(article.title)}</image:caption>
+      <image:title>${escapeXml(article.title)}</image:title>
+    </image:image>` : ""}
   </url>`;
     })
     .join("");
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-  xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+  xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${entries}
 </urlset>`;
 
@@ -42,6 +59,7 @@ ${entries}
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
       "Cache-Control": "s-maxage=1800, stale-while-revalidate=3600",
+      "X-Robots-Tag": "noindex",
     },
   });
 }

@@ -1,9 +1,13 @@
 import React from "react";
+import Script from "next/script";
 import { 
   Box, Container, Typography, Stack, Grid, Avatar, 
   Card, CardContent, Divider, Chip, IconButton, Tooltip, Paper 
 } from "@mui/material";
 import { getAllNews } from "@/utils/getAllNews";
+import { SITE_NAME, SITE_URL, SITE_TWITTER_HANDLE } from "@/lib/site";
+
+export const revalidate = 3600; // Revalidate author pages hourly
 import { getAuthorProfile } from "@/lib/firestore";
 import Link from "next/link";
 import Image from "next/image";
@@ -26,16 +30,32 @@ export async function generateMetadata({ params }) {
     getSiteSettings()
   ]);
 
-  const siteName = settings?.siteName || "The Brain";
+  const siteName = settings?.siteName || SITE_NAME;
   const bio = profile?.bio || `Read articles and professional insights from ${name} at ${siteName}.`;
+  const image = profile?.image || null;
+  const authorPageUrl = `${SITE_URL}/authors/${encodeURIComponent(name)}`;
 
   return {
     title: `${name} | Author Profile | ${siteName}`,
     description: bio,
+    keywords: [name, "author", "journalist", siteName, "news"],
+    alternates: { canonical: `/authors/${encodeURIComponent(name)}` },
     openGraph: {
       title: `${name} | Author Profile | ${siteName}`,
       description: bio,
-    }
+      url: authorPageUrl,
+      siteName,
+      type: "profile",
+      ...(image && { images: [{ url: image, width: 400, height: 400, alt: name }] }),
+    },
+    twitter: {
+      card: "summary",
+      site: SITE_TWITTER_HANDLE,
+      title: `${name} | Author Profile | ${siteName}`,
+      description: bio,
+      ...(image && { images: [image] }),
+    },
+    robots: { index: true, follow: true },
   };
 }
 
@@ -51,6 +71,30 @@ export default async function AuthorProfilePage({ params }) {
   const allNews = newsResponse.data || [];
   const authorArticles = allNews.filter(n => n.author?.name === name);
 
+  // Calculate achievements based on metrics
+  const totalViews = authorArticles.reduce((sum, art) => sum + (art.total_view || 0), 0);
+  const avgRating = authorArticles.length > 0
+    ? (authorArticles.reduce((sum, art) => {
+        const ratingVal = typeof art.rating === 'object' ? (art.rating?.number || 0) : (Number(art.rating) || 0);
+        return sum + ratingVal;
+      }, 0) / authorArticles.length).toFixed(1)
+    : "0.0";
+
+  const achievements = [];
+  if (authorArticles.length >= 10) {
+    achievements.push({ label: "Prolific Columnist", desc: "Published 10+ columns", icon: "📚", color: "#10b981" });
+  } else if (authorArticles.length >= 3) {
+    achievements.push({ label: "Featured Writer", desc: "Published 3+ columns", icon: "✍️", color: "#3b82f6" });
+  }
+  if (totalViews >= 10000) {
+    achievements.push({ label: "Viral Voice", desc: "10k+ total views", icon: "🔥", color: "#f59e0b" });
+  } else if (totalViews >= 1000) {
+    achievements.push({ label: "Rising Influence", desc: "1k+ total views", icon: "📈", color: "#8b5cf6" });
+  }
+  if (Number(avgRating) >= 4.5) {
+    achievements.push({ label: "Top Rated Editor", desc: "Avg rating ≥ 4.5", icon: "💎", color: "#ec4899" });
+  }
+
   // Merge database profile with fallback defaults for E-E-A-T
   // We prioritize the REAL profile image and avoid "guessing" from articles for consistency.
   const authorInfo = {
@@ -62,7 +106,44 @@ export default async function AuthorProfilePage({ params }) {
     social: dbProfile?.social || { twitter: "#", linkedin: "#", website: "#" }
   };
 
+  // ── Person JSON-LD Schema (E-E-A-T authority signal) ───────────────────────
+  const personSchema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": `${SITE_URL}/authors/${encodeURIComponent(name)}#person`,
+    name,
+    description: authorInfo.bio,
+    image: authorInfo.image || undefined,
+    jobTitle: authorInfo.role,
+    worksFor: {
+      "@type": "NewsMediaOrganization",
+      "@id": `${SITE_URL}/#organization`,
+      name: SITE_NAME,
+    },
+    url: `${SITE_URL}/authors/${encodeURIComponent(name)}`,
+    sameAs: [
+      authorInfo.social?.twitter && authorInfo.social.twitter !== "#"
+        ? authorInfo.social.twitter
+        : null,
+      authorInfo.social?.linkedin && authorInfo.social.linkedin !== "#"
+        ? authorInfo.social.linkedin
+        : null,
+      authorInfo.social?.website && authorInfo.social.website !== "#"
+        ? authorInfo.social.website
+        : null,
+    ].filter(Boolean),
+    knowsAbout: authorInfo.expertise,
+    numberOfItems: authorArticles.length,
+  };
+
   return (
+    <>
+      <Script
+        id="author-jsonld"
+        type="application/ld+json"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }}
+      />
     <Container maxWidth="lg" sx={{ py: 8 }}>
       {/* ── Author Header Card ── */}
       <Card sx={{ 
@@ -177,6 +258,46 @@ export default async function AuthorProfilePage({ params }) {
                   </Stack>
                 </Stack>
               </Paper>
+
+              <Paper variant="outlined" sx={{ p: 3, borderRadius: 3, bgcolor: "#f8fafc", mt: 3 }}>
+                <Typography variant="subtitle2" fontWeight={800} color="text.secondary" sx={{ mb: 2, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                  Earned Credentials
+                </Typography>
+                {achievements.length === 0 ? (
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", lineHeight: 1.5 }}>
+                    Writers earn credentials based on audience size, view counts, and publishing activity.
+                  </Typography>
+                ) : (
+                  <Stack spacing={2}>
+                    {achievements.map((badge) => (
+                      <Stack key={badge.label} direction="row" alignItems="center" gap={1.5}>
+                        <Box sx={{ 
+                          width: 32, 
+                          height: 32, 
+                          borderRadius: "50%", 
+                          display: "flex", 
+                          alignItems: "center", 
+                          justifyContent: "center", 
+                          bgcolor: "white", 
+                          border: "1px solid", 
+                          borderColor: "divider",
+                          boxShadow: "0 2px 5px rgba(0,0,0,0.03)"
+                        }}>
+                          {badge.icon}
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" fontWeight={800} sx={{ color: badge.color, lineHeight: 1.2 }}>
+                            {badge.label}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {badge.desc}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    ))}
+                  </Stack>
+                )}
+              </Paper>
             </Grid>
           </Grid>
         </CardContent>
@@ -249,5 +370,6 @@ export default async function AuthorProfilePage({ params }) {
         </Grid>
       </Box>
     </Container>
+    </>
   );
 }

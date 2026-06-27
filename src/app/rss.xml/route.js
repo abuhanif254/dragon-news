@@ -5,10 +5,20 @@ import { cdata, createExcerpt, escapeXml, toRssDate } from "@/lib/content-utils"
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get("category");
+
     const newsResponse = await getAllNews({ includeFallback: false });
-    const newsData = newsResponse.status ? newsResponse.data : [];
+    let newsData = newsResponse.status ? newsResponse.data : [];
+
+    if (category) {
+      newsData = newsData.filter(
+        (news) => news.category?.toLowerCase() === category.toLowerCase()
+      );
+    }
+
     const sortedNews = [...newsData].sort(
       (a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0)
     );
@@ -34,6 +44,9 @@ export async function GET() {
       })
       .join("");
 
+    const feedTitle = category ? `${SITE_NAME} | ${category} News Feed` : `${SITE_NAME} | Atheism Activism Magazine`;
+    const selfLink = category ? `${SITE_URL}/rss.xml?category=${encodeURIComponent(category)}` : `${SITE_URL}/rss.xml`;
+
     const rssFeedXml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"
   xmlns:content="http://purl.org/rss/1.0/modules/content/"
@@ -42,8 +55,8 @@ export async function GET() {
   xmlns:media="http://search.yahoo.com/mrss/"
 >
   <channel>
-    <title>${escapeXml(`${SITE_NAME} | Atheism Activism Magazine`)}</title>
-    <atom:link href="${escapeXml(`${SITE_URL}/rss.xml`)}" rel="self" type="application/rss+xml" />
+    <title>${escapeXml(feedTitle)}</title>
+    <atom:link href="${escapeXml(selfLink)}" rel="self" type="application/rss+xml" />
     <link>${escapeXml(SITE_URL)}</link>
     <description>${escapeXml(SITE_DESCRIPTION)}</description>
     <language>en-us</language>

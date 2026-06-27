@@ -18,10 +18,22 @@ export const ThemeContextProvider = ({ children }) => {
 
   useEffect(() => {
     setMounted(true);
-    const savedMode = localStorage.getItem("themeMode") || "light";
-    setMode(savedMode);
-    if (savedMode === "dark") {
+    
+    // Check local storage first
+    const savedMode = localStorage.getItem("themeMode");
+    
+    // Fall back to system preference
+    const systemPrefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    
+    const initialMode = savedMode || (systemPrefersDark ? "dark" : "light");
+    setMode(initialMode);
+    
+    if (initialMode === "dark") {
       document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.setAttribute("data-theme", "light");
     }
   }, []);
 
@@ -32,11 +44,11 @@ export const ThemeContextProvider = ({ children }) => {
     
     if (newMode === "dark") {
       document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
     } else {
       document.documentElement.classList.remove("dark");
+      document.documentElement.setAttribute("data-theme", "light");
     }
-    
-    console.log("Theme toggled to:", newMode); // Debug log
   };
 
   const theme = useMemo(
@@ -78,11 +90,6 @@ export const ThemeContextProvider = ({ children }) => {
       }),
     [mode]
   );
-
-  // Don't render until mounted to avoid hydration mismatch
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <ThemeContext.Provider value={{ mode, toggleTheme }}>

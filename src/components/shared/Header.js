@@ -21,7 +21,7 @@ const Header = () => {
                 fontSize: { xs: '2rem', md: '3rem' }, 
                 fontWeight: 900, 
                 fontFamily: "'Playfair Display', serif", 
-                color: '#1a1a2e', 
+                color: 'text.primary', 
                 textTransform: 'uppercase',
                 letterSpacing: '-0.02em'
               }}

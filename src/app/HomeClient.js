@@ -1,11 +1,15 @@
 "use client";
-import LatestNews from "@/components/ui/LatestNews/LatestNews";
+import React from "react";
 import SideBar from "@/components/ui/SideBar/SideBar";
 import NewsTicker from "@/components/ui/NewsTicker/NewsTicker";
 import SearchBox from "@/components/ui/SearchBox/SearchBox";
 import TrendingTopics from "@/components/ui/TrendingTopics/TrendingTopics";
-import { Grid, Box, Alert, AlertTitle, Typography, Button } from "@mui/material";
+import HeroSection from "@/components/ui/HeroSection/HeroSection";
+import FeaturedGrid from "@/components/ui/FeaturedGrid/FeaturedGrid";
+import ArticleCard from "@/components/ui/ArticleCard/ArticleCard";
+import { Grid, Box, Alert, AlertTitle, Typography, Button, Container, Stack } from "@mui/material";
 import WifiOffIcon from "@mui/icons-material/WifiOff";
+import WhatshotIcon from '@mui/icons-material/Whatshot';
 
 export default function HomeClient({ allNews, error }) {
   if (error) {
@@ -36,15 +40,48 @@ export default function HomeClient({ allNews, error }) {
     );
   }
 
+  const featuredArticle = allNews.length > 0 ? allNews[0] : null;
+  const topStories = allNews.slice(1, 8); // Next 7 stories for the grid
+  const recentStories = allNews.slice(8, 20); // The rest for the bottom feed
+
   return (
-    <Box className="fade-in-up">
-      <NewsTicker allNews={allNews} />
-      <SearchBox allNews={allNews} />
-      <TrendingTopics allNews={allNews} />
-      <Grid container spacing={3} sx={{ mt: 0 }}>
+    <Box>
+      <Box className="fade-in-up" sx={{ animationDelay: '0.1s' }}>
+        <NewsTicker allNews={allNews} />
+      </Box>
+      <Box className="fade-in-up" sx={{ animationDelay: '0.2s' }}>
+        <SearchBox allNews={allNews} />
+      </Box>
+      <Box className="fade-in-up" sx={{ animationDelay: '0.3s' }}>
+        <TrendingTopics allNews={allNews} />
+      </Box>
+
+      {/* Hero Section */}
+      <Box className="fade-in-up" sx={{ animationDelay: '0.4s', mt: 4 }}>
+        <HeroSection article={featuredArticle} />
+      </Box>
+
+      {/* Magazine Grid */}
+      <Box className="fade-in-up" sx={{ animationDelay: '0.5s', mt: 6 }}>
+        <FeaturedGrid articles={topStories} title="Top Stories" />
+      </Box>
+
+      {/* Two Column Layout for Recent News & Sidebar */}
+      <Grid container spacing={5} sx={{ mt: 4 }} className="fade-in-up" style={{ animationDelay: '0.6s' }}>
         <Grid item xs={12} md={8}>
-          <LatestNews allNews={allNews} />
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, pb: 2, borderBottom: '2px solid', borderColor: 'divider' }}>
+            <WhatshotIcon sx={{ color: 'var(--brand-red)', mr: 1.5, fontSize: 32 }} />
+            <Typography variant="h4" component="h2" fontWeight={900} sx={{ fontFamily: "'Playfair Display', serif" }}>
+              Recent News
+            </Typography>
+          </Box>
+          <Stack spacing={4}>
+            {recentStories.map((article) => (
+              <ArticleCard key={article.id || article._id} article={article} layout="horizontal" />
+            ))}
+          </Stack>
         </Grid>
+        
         <Grid item xs={12} md={4}>
           <SideBar allNews={allNews} />
         </Grid>

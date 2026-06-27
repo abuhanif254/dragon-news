@@ -22,7 +22,23 @@ const ReadingProgressBar = () => {
     return () => window.removeEventListener("scroll", updateProgress);
   }, []);
 
-  return <div id="reading-progress" aria-hidden="true" />;
+  return (
+    <div
+      id="reading-progress"
+      aria-hidden="true"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        height: "4px",
+        width: "0%",
+        background: "linear-gradient(90deg, #ef4444 0%, #f97316 50%, #f59e0b 100%)",
+        zIndex: 9999,
+        transition: "width 0.1s ease-out",
+        boxShadow: "0 2px 8px rgba(239, 68, 68, 0.4)"
+      }}
+    />
+  );
 };
 
 export default ReadingProgressBar;

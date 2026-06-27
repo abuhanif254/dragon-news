@@ -1,10 +1,28 @@
+export function decodeHtmlEntities(str = "") {
+  return String(str)
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&ldquo;/gi, '"')
+    .replace(/&rdquo;/gi, '"')
+    .replace(/&lsquo;/gi, "'")
+    .replace(/&rsquo;/gi, "'")
+    .replace(/&#39;/gi, "'")
+    .replace(/&#34;/gi, '"');
+}
+
 export function stripHtml(value = "") {
-  return String(value)
+  let clean = String(value)
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+    .replace(/<[^>]+>/g, " ");
+  
+  clean = decodeHtmlEntities(clean);
+  
+  return clean.replace(/\s+/g, " ").trim();
 }
 
 export function createExcerpt(value = "", maxLength = 160) {

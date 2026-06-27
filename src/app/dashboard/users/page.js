@@ -26,12 +26,14 @@ import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import DownloadIcon from "@mui/icons-material/Download";
 import { getAllUsers, reviewWriterApplication, updateUserRole } from "@/lib/auth-service";
 import { ADMIN_EMAIL, isAdminEmail } from "@/lib/site";
 
 const ROLE_COLORS = {
   admin: "#c0392b",
   writer: "#2563eb",
+  moderator: "#10b981",
   reader: "#64748b",
 };
 
@@ -41,6 +43,16 @@ export default function UserManagementPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [search, setSearch] = useState("");
+
+  const handleExport = () => {
+    const csv = filteredUsers.map(u => `"${u.name || ''}","${u.email}","${u.role}","${u.writerApplicationStatus || 'none'}"`).join("\n");
+    const blob = new Blob([`Name,Email,Role,Writer Status\n${csv}`], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `users_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -134,9 +146,20 @@ export default function UserManagementPage() {
             Approve writer requests and keep {ADMIN_EMAIL} as the only admin account.
           </Typography>
         </Box>
-        <IconButton onClick={fetchUsers} sx={{ alignSelf: { xs: "flex-start", sm: "center" }, bgcolor: "white", border: "1px solid #e2e8f0" }}>
-          <RefreshIcon />
-        </IconButton>
+        <Stack direction="row" spacing={1.5} sx={{ alignSelf: { xs: "flex-start", sm: "center" } }}>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DownloadIcon />}
+            onClick={handleExport}
+            sx={{ fontWeight: 700, textTransform: "none", borderRadius: 2 }}
+          >
+            Export CSV
+          </Button>
+          <IconButton onClick={fetchUsers} sx={{ bgcolor: "white", border: "1px solid #e2e8f0" }}>
+            <RefreshIcon />
+          </IconButton>
+        </Stack>
       </Stack>
 
       {success && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{success}</Alert>}
@@ -269,6 +292,7 @@ export default function UserManagementPage() {
                           >
                             <MenuItem value="reader">Reader</MenuItem>
                             <MenuItem value="writer">Writer</MenuItem>
+                            <MenuItem value="moderator">Moderator</MenuItem>
                             {adminLocked && <MenuItem value="admin">Admin</MenuItem>}
                           </Select>
                         </Stack>

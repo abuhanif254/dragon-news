@@ -1,0 +1,35 @@
+{
+  "name": "The Brain | Atheism Activism Magazine",
+  "short_name": "The Brain",
+  "description": "Independent news, analysis, and essays for atheism activism, secular values, free inquiry, and humanist public life.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a2e",
+  "lang": "en",
+  "dir": "ltr",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["news", "magazine", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Latest News",
+      "short_name": "News",
+      "description": "Read the latest news articles",
+      "url": "/news",
+      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
+    },
+    {
+      "name": "All Categories",
+      "short_name": "Categories",
+      "description": "Browse news by category",
+      "url": "/categories/news?category=all-news",
+      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
+    }
+  ],
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "48x48", "type": "image/x-icon" }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

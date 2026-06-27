@@ -17,6 +17,7 @@ import VerifiedIcon from "@mui/icons-material/Verified";
 import { getNewsForUser, deleteNews, updateNewsStatus } from "@/lib/firestore";
 import { useRouter } from "next/navigation";
 import { subscribeToAuth } from "@/lib/auth-service";
+import { useConfirm } from "@/context/ToastContext";
 
 const ITEMS_PER_PAGE = 10;
 const CAT_COLORS = {
@@ -27,6 +28,7 @@ const CAT_COLORS = {
 };
 
 export default function ManageNews() {
+  const confirm = useConfirm();
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -140,7 +142,8 @@ export default function ManageNews() {
       setError("Only admins can delete articles.");
       return;
     }
-    if (!confirm("Permanently delete this article? This cannot be undone.")) return;
+    const confirmed = await confirm("Delete Article", "Permanently delete this article? This cannot be undone.");
+    if (!confirmed) return;
     setDeletingId(id);
     try {
       await deleteNews(id);
@@ -161,7 +164,8 @@ export default function ManageNews() {
       setError("Only admins can delete articles.");
       return;
     }
-    if (!confirm(`Delete ${selected.length} selected articles? This cannot be undone.`)) return;
+    const confirmed = await confirm("Bulk Delete", `Delete ${selected.length} selected articles? This cannot be undone.`);
+    if (!confirmed) return;
     for (const id of selected) {
       try {
         await deleteNews(id);

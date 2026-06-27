@@ -6,10 +6,13 @@ import TwitterIcon from "@mui/icons-material/X";
 import LinkedInIcon from "@mui/icons-material/LinkedIn";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import WhatsAppIcon from "@mui/icons-material/WhatsApp";
+import TelegramIcon from "@mui/icons-material/Telegram";
+import EmailIcon from "@mui/icons-material/Email";
 import ShareIcon from "@mui/icons-material/Share";
+import RedditIcon from "@mui/icons-material/Reddit";
 import { Typography } from "@mui/material";
 
-const ShareButtons = ({ title, url }) => {
+const ShareButtons = ({ title, url, direction = "row" }) => {
   const [snackOpen, setSnackOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [pageUrl, setPageUrl] = useState(url || "");
@@ -57,22 +60,42 @@ const ShareButtons = ({ title, url }) => {
       color: "#0A66C2",
     },
     {
+      icon: <RedditIcon fontSize="small" />,
+      label: "Share on Reddit",
+      href: `https://www.reddit.com/submit?url=${encoded}&title=${encodedTitle}`,
+      color: "#FF4500",
+    },
+    {
       icon: <WhatsAppIcon fontSize="small" />,
       label: "Share on WhatsApp",
       href: `https://wa.me/?text=${encodedTitle}%20${encoded}`,
       color: "#25D366",
     },
+    {
+      icon: <TelegramIcon fontSize="small" />,
+      label: "Share on Telegram",
+      href: `https://t.me/share/url?url=${encoded}&text=${encodedTitle}`,
+      color: "#0088cc",
+    },
+    {
+      icon: <EmailIcon fontSize="small" />,
+      label: "Share via Email",
+      href: `mailto:?subject=${encodedTitle}&body=${encodedTitle}%0A%0A${encoded}`,
+      color: "#6c757d",
+    },
   ];
 
   return (
     <>
-      <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
-        <Stack direction="row" alignItems="center" gap={0.5}>
-          <ShareIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-          <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase" }}>
-            Share
-          </Typography>
-        </Stack>
+      <Stack direction={direction} alignItems={direction === "row" ? "center" : "flex-start"} gap={1} flexWrap="wrap">
+        {direction === "row" && (
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            <ShareIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Share
+            </Typography>
+          </Stack>
+        )}
         {BUTTONS.map(({ icon, label, href, color }) => (
           <Tooltip key={label} title={label} arrow>
             <IconButton
@@ -86,8 +109,13 @@ const ShareButtons = ({ title, url }) => {
                 backgroundColor: color,
                 width: 34,
                 height: 34,
-                transition: "all 0.2s",
-                "&:hover": { opacity: 0.85, transform: "scale(1.1)" },
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                "&:hover": {
+                  backgroundColor: color,
+                  opacity: 0.9,
+                  transform: "translateY(-2px) scale(1.1)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                },
               }}
             >
               {icon}
@@ -103,8 +131,13 @@ const ShareButtons = ({ title, url }) => {
               borderColor: "divider",
               width: 34,
               height: 34,
-              transition: "all 0.2s",
-              "&:hover": { borderColor: "#c0392b", color: "#c0392b" },
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+              "&:hover": {
+                borderColor: "#c0392b",
+                color: "#c0392b",
+                transform: "translateY(-2px)",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+              },
             }}
           >
             <ContentCopyIcon fontSize="small" />

@@ -21,6 +21,7 @@ import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import SearchIcon from "@mui/icons-material/Search";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import PagesIcon from "@mui/icons-material/Pages";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { subscribeToAuth, logout as firebaseLogout } from "@/lib/auth-service";
@@ -30,6 +31,7 @@ const DRAWER_MINI = 72;
 
 const MENU_ITEMS = [
   { title: "Overview", path: "/dashboard", icon: <DashboardIcon />, roles: ["admin", "writer", "reader"] },
+  { title: "Saved Bookmarks", path: "/dashboard/bookmarks", icon: <BookmarkIcon />, roles: ["admin", "writer", "reader"] },
   { title: "Articles", path: "/dashboard/news", icon: <ArticleIcon />, roles: ["admin", "writer"] },
   { title: "Publish New", path: "/dashboard/news/create", icon: <AddCircleIcon />, roles: ["admin", "writer"] },
   { title: "Categories", path: "/dashboard/categories", icon: <CategoryIcon />, roles: ["admin"] },

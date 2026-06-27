@@ -21,6 +21,7 @@ export default function DashboardOverview() {
   const [applicationMessage, setApplicationMessage] = useState("");
   const [applyStatus, setApplyStatus] = useState({ type: "", message: "" });
   const [applying, setApplying] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuth((u) => setUser(u));
@@ -39,6 +40,26 @@ export default function DashboardOverview() {
     fetchNews();
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (user?.role === "writer" && user?.writerApplicationStatus === "approved") {
+      if (typeof window !== "undefined") {
+        const dismissed = localStorage.getItem(`dismiss_welcome_${user.uid}`);
+        if (!dismissed) {
+          setShowWelcome(true);
+        }
+      }
+    } else {
+      setShowWelcome(false);
+    }
+  }, [user]);
+
+  const handleDismissWelcome = () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`dismiss_welcome_${user.uid}`, "true");
+    }
+    setShowWelcome(false);
+  };
 
   const handleWriterApplication = async () => {
     setApplying(true);
@@ -160,6 +181,63 @@ export default function DashboardOverview() {
           </Link>
         </Stack>
       </Stack>
+
+      {showWelcome && (
+        <Card sx={{ 
+          mb: 4, 
+          borderRadius: 3.5, 
+          background: "linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)",
+          color: "white", 
+          boxShadow: "0 12px 30px rgba(37,99,235,0.25)",
+          position: "relative",
+          overflow: "hidden"
+        }}>
+          <CardContent sx={{ p: 4 }}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={3} alignItems="center" justifyContent="space-between">
+              <Box>
+                <Typography variant="h5" fontWeight={900} sx={{ mb: 1, fontFamily: "'Playfair Display', serif" }}>
+                  🎉 Welcome to the Editorial Team!
+                </Typography>
+                <Typography variant="body2" sx={{ opacity: 0.9, lineHeight: 1.6, maxWidth: 650 }}>
+                  Your writer application has been approved by the editorial administrators. You now have complete access to compose and submit news stories, investigate metrics on your performance, and customize your professional author profile.
+                </Typography>
+              </Box>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Button
+                  variant="contained"
+                  component={Link}
+                  href="/dashboard/news/create"
+                  sx={{
+                    bgcolor: "white",
+                    color: "#2563eb",
+                    fontWeight: 800,
+                    borderRadius: 2,
+                    textTransform: "none",
+                    px: 3,
+                    py: 1,
+                    whiteSpace: "nowrap",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.9)" }
+                  }}
+                >
+                  Write First Article
+                </Button>
+                <Button
+                  variant="text"
+                  onClick={handleDismissWelcome}
+                  sx={{
+                    color: "rgba(255,255,255,0.8)",
+                    fontWeight: 600,
+                    textTransform: "none",
+                    "&:hover": { color: "white" }
+                  }}
+                >
+                  Dismiss
+                </Button>
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
 
       {user?.role === "reader" && (
         <Card sx={{ mb: 4, borderRadius: 3, border: "1px solid #e2e8f0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>

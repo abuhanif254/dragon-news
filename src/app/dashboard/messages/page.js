@@ -4,7 +4,7 @@ import {
   Box, Typography, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, IconButton, Chip, Tooltip, Avatar, Stack,
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
-  CircularProgress, Alert, Badge
+  CircularProgress, Alert, Badge, Tabs, Tab
 } from "@mui/material";
 import { getAllMessages, updateMessageStatus, deleteMessage } from "@/lib/firestore";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -12,8 +12,11 @@ import MarkEmailReadIcon from "@mui/icons-material/MarkEmailRead";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EmailIcon from "@mui/icons-material/Email";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import ChatIcon from "@mui/icons-material/Chat";
+import { useRouter } from "next/navigation";
 
 export default function MessagesPage() {
+  const router = useRouter();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMsg, setSelectedMsg] = useState(null);
@@ -78,10 +81,10 @@ export default function MessagesPage() {
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight={900} sx={{ color: "#0f172a", mb: 0.5 }}>
-            Message Inbox
+            Inboxes & Moderation
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Manage inquiries and feedback from your readers.
+            Manage contact inquiries and reader discussion feeds.
           </Typography>
         </Box>
         <Chip 
@@ -91,6 +94,25 @@ export default function MessagesPage() {
           sx={{ fontWeight: 700, borderRadius: 1.5 }}
         />
       </Stack>
+
+      {/* Navigation Tabs (Inboxes / Comments) */}
+      <Tabs
+        value={0}
+        onChange={(e, val) => {
+          if (val === 1) router.push("/dashboard/messages/comments");
+        }}
+        sx={{
+          mb: 4,
+          borderBottom: 1,
+          borderColor: "divider",
+          "& .MuiTab-root": { textTransform: "none", fontWeight: 700, fontSize: "1rem" },
+          "& .Mui-selected": { color: "#c0392b" },
+          "& .MuiTabs-indicator": { backgroundColor: "#c0392b" },
+        }}
+      >
+        <Tab icon={<EmailIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Contact Messages" />
+        <Tab icon={<ChatIcon sx={{ fontSize: 18 }} />} iconPosition="start" label="Comment Moderation" />
+      </Tabs>
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 

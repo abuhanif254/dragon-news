@@ -6,12 +6,14 @@ import {
   CircularProgress, Alert, Avatar, Tooltip
 } from "@mui/material";
 import { getAllSubscribers, deleteSubscriber } from "@/lib/firestore";
+import { useConfirm } from "@/context/ToastContext";
 import PeopleIcon from "@mui/icons-material/People";
 import EmailIcon from "@mui/icons-material/Email";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DownloadIcon from "@mui/icons-material/Download";
 
 export default function SubscribersPage() {
+  const confirm = useConfirm();
   const [subscribers, setSubscribers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -34,7 +36,8 @@ export default function SubscribersPage() {
   }, []);
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to remove this subscriber?")) {
+    const confirmed = await confirm("Remove Subscriber", "Are you sure you want to remove this subscriber?");
+    if (confirmed) {
       try {
         await deleteSubscriber(id);
         setSubscribers(prev => prev.filter(s => s.id !== id));

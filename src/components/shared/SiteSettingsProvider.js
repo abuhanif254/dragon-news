@@ -42,8 +42,15 @@ export function SiteSettingsProvider({ children }) {
     return () => { mounted = false; };
   }, []);
 
+  const primaryColor = settings.primaryColor || "#c0392b";
+
   return (
     <SiteSettingsContext.Provider value={settings}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        :root {
+          --brand-red: ${primaryColor} !important;
+        }
+      ` }} />
       {children}
     </SiteSettingsContext.Provider>
   );
