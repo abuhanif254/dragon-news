@@ -40,8 +40,10 @@ export default function HomeClient({ allNews, error }) {
     );
   }
 
-  const topStories = allNews.slice(0, 8); // Top 8 stories for the grid
-  const recentStories = allNews.slice(8, 20); // The rest for the bottom feed
+  // Distribute articles: Top 4 go to the featured grid, the rest flow into the recent feed.
+  // This prevents the recent feed from being empty when there are fewer than 9 articles.
+  const topStories = allNews.slice(0, 4); 
+  const recentStories = allNews.slice(4, 20);
 
   return (
     <Box>
