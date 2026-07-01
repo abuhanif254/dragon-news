@@ -21,7 +21,7 @@ export async function generateStaticParams() {
   // Pre-render the most recent 20 articles at build time
   const response = await getAllNews({ includeFallback: false });
   const articles = response.status ? response.data.slice(0, 20) : [];
-  return articles.map((a) => ({ newsId: a.id || a._id }));
+  return articles.map((a) => ({ news: "news", newsId: a.id || a._id }));
 }
 
 export async function generateMetadata({ params }) {
