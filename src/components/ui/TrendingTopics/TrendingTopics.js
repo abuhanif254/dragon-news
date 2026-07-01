@@ -17,7 +17,7 @@ const TrendingTopics = ({ allNews: data = [] }) => {
       sx={{
         my: 2,
         p: 2,
-        background: "linear-gradient(135deg, #fff8f8 0%, #fff 100%)",
+        background: (theme) => theme.palette.mode === 'dark' ? "linear-gradient(135deg, rgba(192,57,43,0.1) 0%, rgba(0,0,0,0.2) 100%)" : "linear-gradient(135deg, #fff8f8 0%, #fff 100%)",
         borderRadius: 2.5,
         border: "1px solid",
         borderColor: "rgba(192,57,43,0.12)",
@@ -74,7 +74,7 @@ const TrendingTopics = ({ allNews: data = [] }) => {
                   minWidth: 20,
                   height: 20,
                   borderRadius: 0.8,
-                  background: i < 3 ? "#c0392b" : "rgba(0,0,0,0.08)",
+                  background: i < 3 ? "#c0392b" : (theme) => theme.palette.mode === 'dark' ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)",
                   color: i < 3 ? "white" : "text.secondary",
                   display: "flex",
                   alignItems: "center",

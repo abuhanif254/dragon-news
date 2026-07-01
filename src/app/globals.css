@@ -167,7 +167,7 @@ a {
 
 /* ─── Article Prose (Rich Text Output) ─────────────────────────────── */
 .article-prose {
-  color: var(--brand-charcoal);
+  color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   font-size: 1.05rem;
   line-height: 1.8;
@@ -185,7 +185,7 @@ a {
   font-weight: 800;
   margin-top: 2rem;
   margin-bottom: 1rem;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 .article-prose h3 {
   font-family: 'Playfair Display', serif;
@@ -236,7 +236,7 @@ a {
   margin: 2rem 0;
   font-style: italic;
   font-size: 1.15rem;
-  color: #475569;
+  color: var(--text-secondary);
   border-radius: 0 8px 8px 0;
 }
 .article-prose blockquote p {

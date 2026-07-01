@@ -27,8 +27,13 @@ export default function RichTextRenderer({ content }) {
       return `<${tag} id="${id}">${text}</${tag}>`;
     });
     
+    // Strip explicit color and background-color styles that ruin dark mode
+    const noColors = withIds
+      .replace(/color:\s*[^;"]+;?/gi, '')
+      .replace(/background-color:\s*[^;"]+;?/gi, '');
+      
     // Configure DOMPurify to keep id attributes
-    return DOMPurify.sanitize(withIds, { 
+    return DOMPurify.sanitize(noColors, { 
       ADD_ATTR: ['target', 'id'],
       ADD_TAGS: ['iframe'] // sometimes useful for embedded videos
     });
