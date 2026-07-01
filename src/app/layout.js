@@ -2,6 +2,8 @@ import "./globals.css";
 import { ThemeContextProvider } from "@/theme/ThemeContextProvider";
 import { LayoutWrapper } from "@/components/shared/LayoutWrapper";
 import { SiteSettingsProvider } from "@/components/shared/SiteSettingsProvider";
+import { Inter, Playfair_Display } from "next/font/google";
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { ToastProvider } from "@/context/ToastContext";
 import {
   DEFAULT_OG_IMAGE,
@@ -18,6 +20,21 @@ import {
   SITE_LOGO,
 } from "@/lib/site";
 
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+  weight: ['300', '400', '500', '600', '700', '800', '900']
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-playfair",
+  style: ['normal', 'italic'],
+  weight: ['400', '600', '700', '900']
+});
 
 export async function generateViewport() {
   return {
@@ -212,24 +229,13 @@ export default async function RootLayout({ children }) {
   const ogImage = settings?.ogImage || DEFAULT_OG_IMAGE;
 
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${playfair.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         {/* ── Preconnect for performance ── */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <link rel="dns-prefetch" href="https://storage.googleapis.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
-
-        {/* ── Google Fonts delivery ── */}
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600;1,700;1,900&display=swap" rel="stylesheet" />
-        <style>{`
-          :root {
-            --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
-            --font-playfair: 'Playfair Display', Georgia, serif;
-          }
-        `}</style>
-
+        
         {/* ── Viewport (explicit for older browsers) ── */}
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
@@ -241,13 +247,15 @@ export default async function RootLayout({ children }) {
         />
       </head>
       <body style={{ fontFamily: "var(--font-inter)", margin: 0 }}>
-        <ThemeContextProvider>
-          <ToastProvider>
-            <SiteSettingsProvider>
-              <LayoutWrapper>{children}</LayoutWrapper>
-            </SiteSettingsProvider>
-          </ToastProvider>
-        </ThemeContextProvider>
+        <AppRouterCacheProvider>
+          <ThemeContextProvider>
+            <ToastProvider>
+              <SiteSettingsProvider>
+                <LayoutWrapper>{children}</LayoutWrapper>
+              </SiteSettingsProvider>
+            </ToastProvider>
+          </ThemeContextProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );
