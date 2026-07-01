@@ -164,13 +164,11 @@ export async function deleteNews(id) {
     console.error("Error deleting news:", error);
     throw error;
   }
-}// Increment article views (Using REST to bypass gRPC blocks)
-// Note: Requires Firestore Rules to allow public 'update' for the 'total_view' field.
-export async function incrementViews(id) {
-  const projectId = db.app.options.projectId;
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
-
+}export async function incrementViews(id) {
   try {
+    if (!db || !db.app || !db.app.options) return;
+    const projectId = db.app.options.projectId;
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -199,12 +197,11 @@ export async function incrementViews(id) {
   }
 }
 
-// Increment article emoji reactions
 export async function incrementReaction(id, reactionId, incrementBy = 1) {
-  const projectId = db.app.options.projectId;
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
-
   try {
+    if (!db || !db.app || !db.app.options) return;
+    const projectId = db.app.options.projectId;
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -379,13 +376,12 @@ export const deleteCategoryFirestore = async (id) => {
   }
 };
 
-// AUTHOR PROFILES MANAGEMENT (Using REST to bypass gRPC blocks)
 export const getAuthorProfile = async (name) => {
-  const projectId = db.app.options.projectId;
-  const apiKey = db.app.options.apiKey;
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery?key=${apiKey}`;
-
   try {
+    if (!db || !db.app || !db.app.options) return null;
+    const projectId = db.app.options.projectId;
+    const apiKey = db.app.options.apiKey;
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery?key=${apiKey}`;
     const res = await fetch(url, {
       method: "POST",
       body: JSON.stringify({
@@ -429,17 +425,13 @@ export const getAuthorProfile = async (name) => {
 };
 
 export const saveAuthorProfile = async (id, profileData) => {
-  const projectId = db.app.options.projectId;
-  const apiKey = db.app.options.apiKey;
-  
-  // Use 'patch' for both create and update in REST (if ID exists)
-  // If no ID, we'd normally use 'create', but for simplicity in a dashboard
-  // we'll often have an ID or use a specific doc name.
-  
-  const docId = id || profileData.name.toLowerCase().replace(/\s+/g, '-');
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/authors/${docId}?key=${apiKey}`;
-
   try {
+    if (!db || !db.app || !db.app.options) throw new Error("Firebase DB not initialized");
+    const projectId = db.app.options.projectId;
+    const apiKey = db.app.options.apiKey;
+    
+    const docId = id || profileData.name.toLowerCase().replace(/\s+/g, '-');
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/authors/${docId}?key=${apiKey}`;
     const res = await fetch(url, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -471,12 +463,11 @@ export const saveAuthorProfile = async (id, profileData) => {
 
 // ─── Site Settings ─────────────────────────────────────────────────────────────
 export const getSiteSettings = async () => {
-  if (!db) return null;
-  const projectId = db.app.options.projectId;
-  const apiKey = db.app.options.apiKey;
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/settings/global?key=${apiKey}`;
-
   try {
+    if (!db || !db.app || !db.app.options) return null;
+    const projectId = db.app.options.projectId;
+    const apiKey = db.app.options.apiKey;
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/settings/global?key=${apiKey}`;
     const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -521,12 +512,11 @@ export const getAllPages = async () => {
 };
 
 export const getPage = async (slug) => {
-  if (!db) return null;
-  const projectId = db.app.options.projectId;
-  const apiKey = db.app.options.apiKey;
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/pages/${slug}?key=${apiKey}`;
-
   try {
+    if (!db || !db.app || !db.app.options) return null;
+    const projectId = db.app.options.projectId;
+    const apiKey = db.app.options.apiKey;
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/pages/${slug}?key=${apiKey}`;
     const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -902,12 +892,11 @@ export async function getNotificationsForUser(user) {
   }
 }
 
-// POLL WIDGET ENGINE
 export async function submitPollVote(id, optionKey) {
-  const projectId = db.app.options.projectId;
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
-
   try {
+    if (!db || !db.app || !db.app.options) return false;
+    const projectId = db.app.options.projectId;
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

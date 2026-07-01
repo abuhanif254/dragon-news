@@ -2,11 +2,14 @@ import { db } from "@/lib/firebase";
 import { firestoreFieldsToObject, normalizeArticle } from "@/lib/content-utils";
 
 export const getSingleNews = async (id) => {
-  const projectId = db.app.options.projectId;
-  const apiKey = db.app.options.apiKey;
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/news/${id}?key=${apiKey}`;
-
   try {
+    if (!db || !db.app || !db.app.options) {
+      throw new Error("Firebase DB not initialized");
+    }
+    const projectId = db.app.options.projectId;
+    const apiKey = db.app.options.apiKey;
+    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/news/${id}?key=${apiKey}`;
+
     const response = await fetch(url, { next: { revalidate: 60 } });
 
     if (!response.ok) {
