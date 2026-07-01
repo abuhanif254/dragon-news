@@ -19,6 +19,10 @@
   --text-primary: #1a1a2e;
   --text-secondary: #64748b;
   --border-color: rgba(0,0,0,0.1);
+  
+  /* Fonts */
+  --font-inter: 'Inter', sans-serif;
+  --font-playfair: 'Playfair Display', serif;
 }
 
 [data-theme="dark"] {

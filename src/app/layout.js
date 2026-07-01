@@ -2,7 +2,6 @@ import "./globals.css";
 import { ThemeContextProvider } from "@/theme/ThemeContextProvider";
 import { LayoutWrapper } from "@/components/shared/LayoutWrapper";
 import { SiteSettingsProvider } from "@/components/shared/SiteSettingsProvider";
-import { Inter, Playfair_Display } from "next/font/google";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { ToastProvider } from "@/context/ToastContext";
 import {
@@ -19,22 +18,6 @@ import {
   ADMIN_EMAIL,
   SITE_LOGO,
 } from "@/lib/site";
-
-
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-inter",
-  weight: ['300', '400', '500', '600', '700', '800', '900']
-});
-
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-playfair",
-  style: ['normal', 'italic'],
-  weight: ['400', '600', '700', '900']
-});
 
 export async function generateViewport() {
   return {
@@ -229,8 +212,13 @@ export default async function RootLayout({ children }) {
   const ogImage = settings?.ogImage || DEFAULT_OG_IMAGE;
 
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
+        {/* ── Google Fonts (Fallback to CDN to avoid build errors) ── */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600;1,700;1,900&display=swap" rel="stylesheet" />
+        
         {/* ── Preconnect for performance ── */}
         <link rel="preconnect" href="https://firestore.googleapis.com" />
         <link rel="dns-prefetch" href="https://storage.googleapis.com" />
