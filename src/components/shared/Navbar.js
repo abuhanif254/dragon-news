@@ -187,9 +187,28 @@ function Navbar() {
               
               <Divider orientation="vertical" flexItem sx={{ mx: 1.5, borderColor: "rgba(255,255,255,0.1)", height: 24, alignSelf: "center" }} />
               
-              <IconButton onClick={() => setSearchOpen(true)} sx={{ color: "white", "&:hover": { color: "#f39c12" } }}>
-                <SearchIcon />
-              </IconButton>
+              <Box 
+                onClick={() => setSearchOpen(true)}
+                sx={{ 
+                  display: "flex", alignItems: "center", gap: 1, 
+                  bgcolor: "rgba(255,255,255,0.08)", 
+                  px: 1.5, py: 0.6, borderRadius: 2, 
+                  cursor: "pointer", 
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  transition: "all 0.2s",
+                  "&:hover": { bgcolor: "rgba(255,255,255,0.15)", borderColor: "rgba(255,255,255,0.3)" }
+                }}
+              >
+                <SearchIcon sx={{ color: "rgba(255,255,255,0.7)", fontSize: 20 }} />
+                <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.5)", fontWeight: 500, mr: 2 }}>
+                  Search...
+                </Typography>
+                <Box sx={{ bgcolor: "rgba(255,255,255,0.1)", px: 0.8, py: 0.2, borderRadius: 1 }}>
+                  <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.7)", fontWeight: 700, fontSize: "0.65rem" }}>
+                    Ctrl+K
+                  </Typography>
+                </Box>
+              </Box>
               
               {user && (
                 <IconButton onClick={handleOpenNoti} sx={{ color: "white", "&:hover": { color: "#f39c12" } }}>

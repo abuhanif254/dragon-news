@@ -125,6 +125,7 @@ export default function ArticleCard({ article, layout = "vertical", showExcerpt 
           <Box sx={{ 
             position: 'relative', 
             width: isHorizontal ? { xs: '100%', sm: '40%' } : '100%', 
+            flex: isHorizontal ? 'none' : 1,
             minHeight: isHorizontal ? { xs: 200, sm: 'auto' } : 240,
             flexShrink: 0,
             overflow: 'hidden'
@@ -144,7 +145,7 @@ export default function ArticleCard({ article, layout = "vertical", showExcerpt 
             )}
           </Box>
           
-          <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 3, justifyContent: 'space-between' }}>
+          <CardContent sx={{ flex: isHorizontal ? 1 : 'none', display: 'flex', flexDirection: 'column', p: 3, justifyContent: 'space-between' }}>
             <Box>
               {isHorizontal && (
                 <Box sx={{ mb: 1.5 }}>

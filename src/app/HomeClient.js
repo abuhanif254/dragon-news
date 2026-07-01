@@ -40,25 +40,13 @@ export default function HomeClient({ allNews, error }) {
     );
   }
 
-  const featuredArticle = allNews.length > 0 ? allNews[0] : null;
-  const topStories = allNews.slice(1, 8); // Next 7 stories for the grid
+  const topStories = allNews.slice(0, 8); // Top 8 stories for the grid
   const recentStories = allNews.slice(8, 20); // The rest for the bottom feed
 
   return (
     <Box>
       <Box className="fade-in-up" sx={{ animationDelay: '0.1s' }}>
         <NewsTicker allNews={allNews} />
-      </Box>
-      <Box className="fade-in-up" sx={{ animationDelay: '0.2s' }}>
-        <SearchBox allNews={allNews} />
-      </Box>
-      <Box className="fade-in-up" sx={{ animationDelay: '0.3s' }}>
-        <TrendingTopics allNews={allNews} />
-      </Box>
-
-      {/* Hero Section */}
-      <Box className="fade-in-up" sx={{ animationDelay: '0.4s', mt: 4 }}>
-        <HeroSection article={featuredArticle} />
       </Box>
 
       {/* Magazine Grid */}

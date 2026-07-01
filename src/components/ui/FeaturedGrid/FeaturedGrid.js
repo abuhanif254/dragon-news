@@ -16,36 +16,11 @@ export default function FeaturedGrid({ articles = [], title = "Featured Stories"
       </Box>
 
       <Grid container spacing={4}>
-        {/* Large featured article on the left */}
-        <Grid item xs={12} md={7} lg={8}>
-          <ArticleCard article={articles[0]} />
-        </Grid>
-        
-        {/* Two smaller articles stacked on the right */}
-        <Grid item xs={12} md={5} lg={4}>
-          <Grid container spacing={4} sx={{ height: '100%' }}>
-            {articles.slice(1, 3).map((article) => (
-              <Grid item xs={12} sm={6} md={12} key={article.id || article._id} sx={{ height: { md: '50%' } }}>
-                <Box sx={{ height: '100%', pb: { md: 2 } }}>
-                  <ArticleCard article={article} />
-                </Box>
-              </Grid>
-            ))}
+        {articles.map((article) => (
+          <Grid item xs={12} sm={6} md={4} lg={3} key={article.id || article._id}>
+            <ArticleCard article={article} />
           </Grid>
-        </Grid>
-
-        {/* Bottom row of 3 or 4 cards */}
-        {articles.length > 3 && (
-          <Grid item xs={12}>
-            <Grid container spacing={4} sx={{ mt: 0 }}>
-              {articles.slice(3, 7).map((article) => (
-                <Grid item xs={12} sm={6} md={3} key={article.id || article._id}>
-                  <ArticleCard article={article} />
-                </Grid>
-              ))}
-            </Grid>
-          </Grid>
-        )}
+        ))}
       </Grid>
     </Box>
   );

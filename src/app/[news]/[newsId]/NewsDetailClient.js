@@ -22,7 +22,6 @@ import ReadingProgressBar from "@/components/ui/ReadingProgressBar/ReadingProgre
 import ShareButtons from "@/components/ui/ShareButtons/ShareButtons";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import RichTextRenderer from "@/components/shared/RichTextRenderer";
 import TableOfContents from "@/components/ui/TableOfContents/TableOfContents";
 import FontSizeControl from "@/components/ui/FontSizeControl/FontSizeControl";
 import ArticleReactions from "@/components/ui/ArticleReactions/ArticleReactions";
@@ -38,7 +37,7 @@ import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 const readingTime = (text = "") =>
   Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
 
-export default function NewsDetailClient({ news, related }) {
+export default function NewsDetailClient({ news, related, contentNode }) {
   const [fontSize, setFontSize] = useState(1);
   const [fontFamily, setFontFamily] = useState("sans-serif");
   const [user, setUser] = useState(null);
@@ -367,13 +366,7 @@ export default function NewsDetailClient({ news, related }) {
               fontSize: `${fontSize}rem`,
               fontFamily: fontFamily === "serif" ? "'Playfair Display', 'Georgia', serif" : "'Inter', 'Roboto', sans-serif"
             }}>
-              {news.details && news.details.includes("<") && news.details.includes(">") ? (
-                <RichTextRenderer content={news.details} />
-              ) : (
-                <Box className="article-prose legacy-content">
-                  {news.details}
-                </Box>
-              )}
+              {contentNode}
             </Box>
 
             {/* Poll Widget */}

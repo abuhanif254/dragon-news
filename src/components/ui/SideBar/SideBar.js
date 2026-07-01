@@ -10,6 +10,7 @@ import SendIcon from "@mui/icons-material/Send";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { subscribeToNewsletter } from "@/lib/firestore";
+import TrendingTopics from "../TrendingTopics/TrendingTopics";
 
 const readingTime = (text = "") => {
   const words = text.trim().split(/\s+/).length;
@@ -119,6 +120,11 @@ const SideBar = ({ allNews: data = [] }) => {
           </CardContent>
         </Card>
       </Link>
+
+      <Divider sx={{ my: 2.5 }} />
+
+      {/* ── Trending Topics ── */}
+      <TrendingTopics allNews={data} />
 
       <Divider sx={{ my: 2.5 }} />
 

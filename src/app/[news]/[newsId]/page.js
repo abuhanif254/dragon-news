@@ -2,6 +2,7 @@ import { getSingleNews } from "@/utils/getSingleNews";
 import { getAllNews } from "@/utils/getAllNews";
 import { incrementViews } from "@/lib/firestore";
 import NewsDetailClient from "./NewsDetailClient";
+import RichTextRenderer from "@/components/shared/RichTextRenderer";
 import { notFound } from "next/navigation";
 import {
   absoluteImage,
@@ -258,6 +259,15 @@ export default async function NewsDetailPage({ params }) {
     },
   };
 
+  // Render RichTextRenderer purely on the server!
+  const contentNode = news.details && news.details.includes("<") && news.details.includes(">") ? (
+    <RichTextRenderer content={news.details} />
+  ) : (
+    <div className="article-prose legacy-content">
+      {news.details}
+    </div>
+  );
+
   return (
     <>
       <script
@@ -265,7 +275,7 @@ export default async function NewsDetailPage({ params }) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <NewsDetailClient news={news} related={related} />
+      <NewsDetailClient news={news} related={related} contentNode={contentNode} />
     </>
   );
 }
