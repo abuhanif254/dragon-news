@@ -19,7 +19,7 @@ import BookmarkIcon from "@mui/icons-material/Bookmark";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import { subscribeToAuth } from "@/lib/auth-service";
 
-export default function ArticleCard({ article, layout = "vertical", showExcerpt = true, searchQuery = "" }) {
+export default function ArticleCard({ article, layout = "vertical", showExcerpt = true, searchQuery = "", priority = false }) {
   const [user, setUser] = useState(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [bookmarkLoading, setBookmarkLoading] = useState(false);
@@ -134,6 +134,7 @@ export default function ArticleCard({ article, layout = "vertical", showExcerpt 
               src={article.thumbnail_url || "https://picsum.photos/600/400"}
               alt={article.title}
               fill
+              priority={priority}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               style={{ objectFit: "cover", transition: "transform 0.5s ease" }}
               className="card-image"

@@ -27,6 +27,12 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false, // Remove X-Powered-By: Next.js header (security)
   reactStrictMode: true,
+  experimental: {
+    optimizePackageImports: ['@mui/material', '@mui/icons-material'],
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error"] } : false,
+  },
 
   // ── Security & SEO HTTP Headers ─────────────────────────────────────────────
   async headers() {

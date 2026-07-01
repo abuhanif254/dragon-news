@@ -16,9 +16,9 @@ export default function FeaturedGrid({ articles = [], title = "Featured Stories"
       </Box>
 
       <Grid container spacing={4}>
-        {articles.map((article) => (
+        {articles.map((article, index) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={article.id || article._id}>
-            <ArticleCard article={article} />
+            <ArticleCard article={article} priority={index < 4} />
           </Grid>
         ))}
       </Grid>
