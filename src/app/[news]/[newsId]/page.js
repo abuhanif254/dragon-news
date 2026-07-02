@@ -37,14 +37,24 @@ export async function generateMetadata({ params }) {
   }
 
   const news = newsResponse.data;
-  const description = createExcerpt(news.details, 160);
+  const seoMeta = news.seoMeta || {};
+
+  // Use custom meta description if set, otherwise auto-generate from content
+  const description = seoMeta.metaDescription?.trim()
+    ? seoMeta.metaDescription
+    : createExcerpt(news.details, 160);
+
   const image = absoluteImage(news.image_url || news.thumbnail_url);
+  const imageAlt = seoMeta.altText?.banner || seoMeta.altText?.thumbnail || news.title;
   const publishedTime = toIsoDate(news.publishedAt || news.author?.published_date);
   const modifiedTime = toIsoDate(
     news.updatedAt || news.publishedAt || news.author?.published_date
   );
 
-  // Dynamically extract keyword search terms from the article title (excluding short/stop words)
+  // Build keyword list: seoMeta tags first, then fallback to title-extracted words
+  const seoTags = Array.isArray(seoMeta.tags) && seoMeta.tags.length > 0
+    ? seoMeta.tags
+    : [];
   const titleWords = news.title
     ? news.title
         .toLowerCase()
@@ -52,7 +62,20 @@ export async function generateMetadata({ params }) {
         .split(/\s+/)
         .filter((w) => w.length > 3 && !["with", "this", "that", "from", "their", "about", "your", "them", "then", "will"].includes(w))
     : [];
-  const dynamicKeywords = Array.from(new Set([news.category, SITE_NAME, ...titleWords])).slice(0, 10);
+  const dynamicKeywords = Array.from(
+    new Set([
+      ...(seoMeta.focusKeyword ? [seoMeta.focusKeyword] : []),
+      ...seoTags,
+      news.category,
+      SITE_NAME,
+      ...titleWords,
+    ])
+  ).slice(0, 15);
+
+  // Build canonical: prefer slug-based if slug is set
+  const canonicalPath = seoMeta.slug?.trim()
+    ? `/news/${seoMeta.slug}`
+    : articlePath(news);
 
   return {
     title: news.title,
@@ -61,7 +84,7 @@ export async function generateMetadata({ params }) {
 
     // ── Canonical ──
     alternates: {
-      canonical: articlePath(news),
+      canonical: canonicalPath,
     },
 
     // ── Open Graph (Article) ──
@@ -75,7 +98,7 @@ export async function generateMetadata({ params }) {
           url: image,
           width: 1200,
           height: 630,
-          alt: news.title,
+          alt: imageAlt,
           type: "image/jpeg",
         },
       ],
@@ -84,7 +107,7 @@ export async function generateMetadata({ params }) {
       publishedTime,
       modifiedTime,
       authors: [authorUrl(news.author?.name)],
-      tags: [news.category, SITE_NAME],
+      tags: dynamicKeywords.slice(0, 6),
       section: news.category,
     },
 
@@ -95,7 +118,7 @@ export async function generateMetadata({ params }) {
       creator: SITE_TWITTER_HANDLE,
       title: news.title,
       description,
-      images: [{ url: image, alt: news.title }],
+      images: [{ url: image, alt: imageAlt }],
     },
 
     // ── Robots ──
@@ -177,6 +200,26 @@ export default async function NewsDetailPage({ params }) {
   const plainText = (news.details || "").replace(/<[^>]+>/g, " ").trim();
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
 
+  const seoMeta = news.seoMeta || {};
+  const seoTags = Array.isArray(seoMeta.tags) && seoMeta.tags.length > 0 ? seoMeta.tags : [];
+  const allKeywords = Array.from(new Set([
+    ...(seoMeta.focusKeyword ? [seoMeta.focusKeyword] : []),
+    ...seoTags,
+    news.category,
+    SITE_NAME,
+  ])).join(", ");
+
+  // Build citation list from seoMeta.sources
+  const citations = Array.isArray(seoMeta.sources)
+    ? seoMeta.sources
+        .filter((s) => s.url?.trim())
+        .map((s) => ({
+          "@type": "CreativeWork",
+          name: s.label || s.url,
+          url: s.url,
+        }))
+    : [];
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -184,13 +227,17 @@ export default async function NewsDetailPage({ params }) {
 
     // ── Content ──
     headline: news.title,
-    description: createExcerpt(news.details, 160),
+    description: seoMeta.metaDescription?.trim() || createExcerpt(news.details, 160),
     articleSection: news.category,
-    articleBody: plainText.slice(0, 500), // Truncated for schema brevity
+    articleBody: plainText.slice(0, 1000), // Expanded for richer structured data
     wordCount,
     inLanguage: "en",
-    keywords: [news.category, SITE_NAME].join(", "),
+    keywords: allKeywords,
     isAccessibleForFree: "True",
+    about: [
+      { "@type": "Thing", name: news.category },
+      ...(seoMeta.focusKeyword ? [{ "@type": "Thing", name: seoMeta.focusKeyword }] : []),
+    ],
 
     // ── Dates ──
     datePublished: publishedIso,
@@ -203,7 +250,7 @@ export default async function NewsDetailPage({ params }) {
       contentUrl: imageUrl,
       width: 1200,
       height: 630,
-      caption: news.title,
+      caption: seoMeta.altText?.banner || seoMeta.altText?.thumbnail || news.title,
     },
 
     // ── Author (E-E-A-T) ──
@@ -228,6 +275,9 @@ export default async function NewsDetailPage({ params }) {
         height: 512,
       },
     },
+
+    // ── Source Citations (E-E-A-T) ──
+    ...(citations.length > 0 && { citation: citations }),
 
     // ── Speakable (for Google Assistant / audio) ──
     speakable: {
