@@ -65,9 +65,9 @@ export default function TableOfContents({ htmlContent }) {
       </Stack>
       
       <Stack spacing={1}>
-        {headings.map((heading) => (
+        {headings.map((heading, index) => (
           <Typography
-            key={heading.id}
+            key={`${heading.id}-${index}`}
             variant="body2"
             component="a"
             href={`#${heading.id}`}
