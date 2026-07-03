@@ -1,0 +1,35 @@
+{
+  "error": {
+    "code": 403,
+    "message": "Cloud Firestore API has not been used in project dragoan-news before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=dragoan-news then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.",
+    "status": "PERMISSION_DENIED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "SERVICE_DISABLED",
+        "domain": "googleapis.com",
+        "metadata": {
+          "activationUrl": "https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=dragoan-news",
+          "serviceTitle": "Cloud Firestore API",
+          "containerInfo": "dragoan-news",
+          "service": "firestore.googleapis.com",
+          "consumer": "projects/dragoan-news"
+        }
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.LocalizedMessage",
+        "locale": "en-US",
+        "message": "Cloud Firestore API has not been used in project dragoan-news before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=dragoan-news then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry."
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.Help",
+        "links": [
+          {
+            "description": "Google developers console API activation",
+            "url": "https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=dragoan-news"
+          }
+        ]
+      }
+    ]
+  }
+}
