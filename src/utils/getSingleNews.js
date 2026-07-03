@@ -1,5 +1,6 @@
 import { db } from "@/lib/firebase";
 import { firestoreFieldsToObject, normalizeArticle } from "@/lib/content-utils";
+import { fetchWithRetry } from "./fetchWithRetry";
 
 export const getSingleNews = async (id) => {
   try {
@@ -10,7 +11,7 @@ export const getSingleNews = async (id) => {
     const apiKey = db.app.options.apiKey;
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/news/${id}?key=${apiKey}`;
 
-    const response = await fetch(url, { next: { revalidate: 60 } });
+    const response = await fetchWithRetry(url, { next: { revalidate: 60 } });
 
     if (!response.ok) {
       throw new Error("Article not found.");

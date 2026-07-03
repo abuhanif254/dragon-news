@@ -1,5 +1,6 @@
 import { db } from "@/lib/firebase";
 import { firestoreFieldsToObject, normalizeArticle } from "@/lib/content-utils";
+import { fetchWithRetry } from "./fetchWithRetry";
 
 const fallbackNews = [
   {
@@ -34,7 +35,7 @@ export const getAllNews = async ({ includeFallback = true } = {}) => {
     const projectId = db.app.options.projectId;
     const apiKey = db.app.options.apiKey;
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery?key=${apiKey}`;
-    const response = await fetch(url, {
+    const response = await fetchWithRetry(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       next: { revalidate: 60 },

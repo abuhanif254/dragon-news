@@ -16,6 +16,7 @@ import {
   arrayRemove,
 } from "firebase/firestore";
 import { normalizeArticle } from "@/lib/content-utils";
+import { fetchWithRetry } from "@/utils/fetchWithRetry";
 
 // Collection reference
 // Get all news
@@ -169,7 +170,7 @@ export async function deleteNews(id) {
     if (!db || !db.app || !db.app.options) return;
     const projectId = db.app.options.projectId;
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -202,7 +203,7 @@ export async function incrementReaction(id, reactionId, incrementBy = 1) {
     if (!db || !db.app || !db.app.options) return;
     const projectId = db.app.options.projectId;
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -382,7 +383,7 @@ export const getAuthorProfile = async (name) => {
     const projectId = db.app.options.projectId;
     const apiKey = db.app.options.apiKey;
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery?key=${apiKey}`;
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: "POST",
       body: JSON.stringify({
         structuredQuery: {
@@ -432,7 +433,7 @@ export const saveAuthorProfile = async (id, profileData) => {
     
     const docId = id || profileData.name.toLowerCase().replace(/\s+/g, '-');
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/authors/${docId}?key=${apiKey}`;
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -468,7 +469,7 @@ export const getSiteSettings = async () => {
     const projectId = db.app.options.projectId;
     const apiKey = db.app.options.apiKey;
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/settings/global?key=${apiKey}`;
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       next: { revalidate: 60 }
@@ -517,7 +518,7 @@ export const getPage = async (slug) => {
     const projectId = db.app.options.projectId;
     const apiKey = db.app.options.apiKey;
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/pages/${slug}?key=${apiKey}`;
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       next: { revalidate: 60 }
