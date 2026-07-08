@@ -300,7 +300,7 @@ export default async function NewsDetailPage({ params }) {
           "@type": "ListItem",
           position: 2,
           name: news.category,
-          item: `${SITE_URL}/categories/news?category=${encodeURIComponent(
+          item: `${SITE_URL}/categories/news/${encodeURIComponent(
             (news.category || "").toLowerCase()
           )}`,
         },

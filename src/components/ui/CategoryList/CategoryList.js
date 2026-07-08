@@ -4,11 +4,11 @@ import { getAllCategories } from "@/utils/getAllCategories";
 import { getAllNews } from "@/utils/getAllNews";
 import { Box, Button, Divider, Stack, Typography, CircularProgress } from "@mui/material";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 const CategoryList = () => {
-  const searchParams = useSearchParams();
-  const activeCategory = searchParams.get("category") || "";
+  const params = useParams();
+  const activeCategory = params?.category ? decodeURIComponent(params.category) : "all-news";
 
   const [categories, setCategories] = useState([]);
   const [allNews, setAllNews] = useState([]);
@@ -79,7 +79,7 @@ const CategoryList = () => {
 
       {/* List */}
       <Box sx={{ px: 1.5, pt: 1.5 }}>
-        <Link href="/categories/news?category=all-news" style={{ display: "block" }}>
+        <Link href="/categories/news/all-news" style={{ display: "block" }}>
           <Button
             fullWidth
             variant={activeCategory === "all-news" ? "contained" : "outlined"}
@@ -132,7 +132,7 @@ const CategoryList = () => {
             return (
               <Link
                 key={category.id}
-                href={`/categories/news?category=${slug}`}
+                href={`/categories/news/${encodeURIComponent(slug)}`}
                 style={{ display: "block" }}
               >
                 <Button

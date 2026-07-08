@@ -1,11 +1,11 @@
-import React from "react";
+import React, { cache } from "react";
 import Script from "next/script";
 import { 
   Box, Container, Typography, Stack, Grid, Avatar, 
   Card, CardContent, Divider, Chip, IconButton, Tooltip, Paper 
 } from "@mui/material";
 import { getAllNews } from "@/utils/getAllNews";
-import { SITE_NAME, SITE_URL, SITE_TWITTER_HANDLE } from "@/lib/site";
+import { SITE_NAME, SITE_URL, SITE_TWITTER_HANDLE, slugify } from "@/lib/site";
 
 export const revalidate = 3600; // Revalidate author pages hourly
 import { getAuthorProfile } from "@/lib/firestore";
@@ -17,12 +17,24 @@ import PublicIcon from "@mui/icons-material/Public";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import ArticleIcon from "@mui/icons-material/Article";
 
+const getAuthorNameBySlug = cache(async (slug) => {
+  const newsResponse = await getAllNews({ includeFallback: false });
+  const allNews = newsResponse.data || [];
+  
+  for (const article of allNews) {
+    if (article.author?.name && slugify(article.author.name) === slug) {
+      return article.author.name;
+    }
+  }
+  return decodeURIComponent(slug); // Fallback
+});
+
 // This would ideally come from an 'authors' collection, 
 // but we'll use our Smart Fetcher to find all articles by this author.
 
 export async function generateMetadata({ params }) {
-  const { authorName } = await params;
-  const name = decodeURIComponent(authorName);
+  const { slug } = await params;
+  const name = await getAuthorNameBySlug(slug);
   
   const { getAuthorProfile, getSiteSettings } = await import("@/lib/firestore");
   const [profile, settings] = await Promise.all([
@@ -33,13 +45,13 @@ export async function generateMetadata({ params }) {
   const siteName = settings?.siteName || SITE_NAME;
   const bio = profile?.bio || `Read articles and professional insights from ${name} at ${siteName}.`;
   const image = profile?.image || null;
-  const authorPageUrl = `${SITE_URL}/authors/${encodeURIComponent(name)}`;
+  const authorPageUrl = `${SITE_URL}/authors/${slug}`;
 
   return {
     title: `${name} | Author Profile | ${siteName}`,
     description: bio,
     keywords: [name, "author", "journalist", siteName, "news"],
-    alternates: { canonical: `/authors/${encodeURIComponent(name)}` },
+    alternates: { canonical: `/authors/${slug}` },
     openGraph: {
       title: `${name} | Author Profile | ${siteName}`,
       description: bio,
@@ -60,8 +72,8 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function AuthorProfilePage({ params }) {
-  const { authorName } = await params;
-  const name = decodeURIComponent(authorName);
+  const { slug } = await params;
+  const name = await getAuthorNameBySlug(slug);
   
   // Fetch real profile from Firestore
   const dbProfile = await getAuthorProfile(name);
@@ -110,7 +122,7 @@ export default async function AuthorProfilePage({ params }) {
   const personSchema = {
     "@context": "https://schema.org",
     "@type": "Person",
-    "@id": `${SITE_URL}/authors/${encodeURIComponent(name)}#person`,
+    "@id": `${SITE_URL}/authors/${slug}#person`,
     name,
     description: authorInfo.bio,
     image: authorInfo.image || undefined,
@@ -120,7 +132,7 @@ export default async function AuthorProfilePage({ params }) {
       "@id": `${SITE_URL}/#organization`,
       name: SITE_NAME,
     },
-    url: `${SITE_URL}/authors/${encodeURIComponent(name)}`,
+    url: `${SITE_URL}/authors/${slug}`,
     sameAs: [
       authorInfo.social?.twitter && authorInfo.social.twitter !== "#"
         ? authorInfo.social.twitter

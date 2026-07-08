@@ -115,15 +115,7 @@ export async function generateMetadata() {
       ...(BING_SITE_VERIFICATION && { other: { "msvalidate.01": BING_SITE_VERIFICATION } }),
     },
 
-    // ── Icons ──
-    icons: {
-      icon: [
-        { url: "/favicon.ico", sizes: "any" },
-        { url: "/icon.png", type: "image/png", sizes: "32x32" },
-      ],
-      apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
-      shortcut: "/favicon.ico",
-    },
+
 
     // ── Manifest & Theme ──
     manifest: "/manifest.json",

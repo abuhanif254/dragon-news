@@ -35,8 +35,8 @@ export const SITE_KEYWORDS = [
 ];
 
 // ─── Images ───────────────────────────────────────────────────────────────────
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/the-brain-logo.png`;
-export const SITE_LOGO = `${SITE_URL}/the-brain-logo.png`;
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/icon.png`;
+export const SITE_LOGO = `${SITE_URL}/icon.png`;
 
 // ─── Verification Tokens (set via env vars for security) ─────────────────────
 export const GOOGLE_SITE_VERIFICATION =
@@ -73,8 +73,17 @@ export function articleUrl(articleOrId) {
   return absoluteUrl(articlePath(articleOrId));
 }
 
+export function slugify(text) {
+  return text.toString().toLowerCase()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+    .replace(/^-+/, '')             // Trim - from start of text
+    .replace(/-+$/, '');            // Trim - from end of text
+}
+
 export function authorPath(name = "") {
-  return `/authors/${encodeURIComponent(name || "The Brain Editorial Team")}`;
+  return `/authors/${slugify(name || "The Brain Editorial Team")}`;
 }
 
 export function authorUrl(name = "") {
@@ -82,7 +91,7 @@ export function authorUrl(name = "") {
 }
 
 export function categoryPath(category = "") {
-  return `/categories/news?category=${encodeURIComponent(category.toLowerCase())}`;
+  return `/categories/news/${encodeURIComponent(category.toLowerCase())}`;
 }
 
 export function categoryUrl(category = "") {

@@ -38,7 +38,7 @@ const TrendingTopics = ({ allNews: data = [] }) => {
       {/* Category chips */}
       <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 1.5 }}>
         {categories.map((cat) => (
-          <Link key={cat} href={`/categories/news?category=${cat.toLowerCase()}`}>
+          <Link key={cat} href={`/categories/news/${encodeURIComponent(cat.toLowerCase())}`}>
             <Chip
               label={cat}
               size="small"

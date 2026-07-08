@@ -9,7 +9,7 @@ export const NAV_ITEMS = [
   },
   {
     route: "Category",
-    pathname: "/categories/news?category=all-news",
+    pathname: "/categories/news/all-news",
   },
   {
     route: "News",

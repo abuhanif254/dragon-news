@@ -2,10 +2,9 @@ import { getCategoryNews } from "@/utils/getCategoryNews";
 import CategoryNewsClient from "./CategoryNewsClient";
 import { SITE_NAME } from "@/lib/site";
 
-export async function generateMetadata({ params, searchParams }) {
+export async function generateMetadata({ params }) {
   const resolvedParams = await params;
-  const resolvedSearchParams = await searchParams;
-  const category = resolvedSearchParams.category || "all-news";
+  const category = decodeURIComponent(resolvedParams.category || "all-news");
   const formattedCategory = category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ');
   
   const { getSiteSettings } = await import("@/lib/firestore");
@@ -16,7 +15,7 @@ export async function generateMetadata({ params, searchParams }) {
     title: `${formattedCategory} News`,
     description: `Latest news, analysis, and activism reporting on ${formattedCategory} from ${siteName}.`,
     alternates: {
-      canonical: `/categories/news?category=${encodeURIComponent(category)}`,
+      canonical: `/categories/news/${encodeURIComponent(category)}`,
     },
     openGraph: {
       title: `${formattedCategory} News | ${siteName}`,
@@ -25,9 +24,9 @@ export async function generateMetadata({ params, searchParams }) {
   };
 }
 
-export default async function DynamicNewsPage({ params, searchParams }) {
-  const resolvedSearchParams = await searchParams;
-  const category = resolvedSearchParams.category || "all-news";
+export default async function DynamicNewsPage({ params }) {
+  const resolvedParams = await params;
+  const category = decodeURIComponent(resolvedParams.category || "all-news");
   
   const response = await getCategoryNews(category);
   

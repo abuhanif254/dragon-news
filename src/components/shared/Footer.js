@@ -212,7 +212,7 @@ const Footer = () => {
               {CATEGORIES.map((cat) => (
                 <Link
                   key={cat}
-                  href={`/categories/news?category=${cat.toLowerCase()}`}
+                  href={`/categories/news/${encodeURIComponent(cat.toLowerCase())}`}
                 >
                   <Typography
                     variant="body2"

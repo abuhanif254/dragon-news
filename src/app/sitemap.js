@@ -10,10 +10,10 @@ export default async function sitemap() {
 
   // ── Unique categories and authors ──────────────────────────────────────────
   const categories = [
-    ...new Set(newsData.map((news) => news.category).filter(Boolean)),
+    ...new Set(newsData.map((news) => news.category?.trim()).filter(Boolean)),
   ];
   const authors = [
-    ...new Set(newsData.map((news) => news.author?.name).filter(Boolean)),
+    ...new Set(newsData.map((news) => news.author?.name?.trim()).filter(Boolean)),
   ];
 
   // ── Static pages ──────────────────────────────────────────────────────────
@@ -28,7 +28,6 @@ export default async function sitemap() {
     { path: "/cookies",        changeFrequency: "yearly",  priority: 0.3 },
   ].map(({ path, changeFrequency, priority }) => ({
     url: `${SITE_URL}${path}`,
-    lastModified: new Date(),
     changeFrequency,
     priority,
   }));
@@ -38,17 +37,15 @@ export default async function sitemap() {
   const categoryEntries = [
     // "All news" catch-all
     {
-      url: `${SITE_URL}/categories/news?category=all-news`,
-      lastModified: new Date(),
+      url: `${SITE_URL}/categories/news/all-news`,
       changeFrequency: "hourly",
       priority: 0.85,
     },
     // Individual categories
     ...categories.map((category) => ({
-      url: `${SITE_URL}/categories/news?category=${encodeURIComponent(
+      url: `${SITE_URL}/categories/news/${encodeURIComponent(
         category.toLowerCase()
       )}`,
-      lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.75,
     })),
@@ -57,7 +54,6 @@ export default async function sitemap() {
   // ── Author pages ──────────────────────────────────────────────────────────
   const authorEntries = authors.map((name) => ({
     url: authorUrl(name),
-    lastModified: new Date(),
     changeFrequency: "weekly",
     priority: 0.6,
   }));

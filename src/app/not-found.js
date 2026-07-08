@@ -89,7 +89,7 @@ export default function NotFound() {
             Back to Home
           </Button>
         </Link>
-        <Link href="/categories/news?category=all-news">
+        <Link href="/categories/news/all-news">
           <Button
             variant="outlined"
             size="large"

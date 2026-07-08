@@ -3,6 +3,7 @@ import SearchClient from "./SearchClient";
 export const metadata = {
   title: "Search Results | The Brain",
   description: "Search for articles, topics, and authors across The Brain news platform.",
+  robots: { index: false, follow: false },
 };
 
 export default function SearchPage() {
