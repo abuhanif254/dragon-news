@@ -125,6 +125,14 @@ export default function NewsDetailClient({ news, related, contentNode }) {
     }
   }, [news]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && news) {
+      import("@/lib/firestore").then(({ incrementViews }) => {
+        incrementViews(news.id || news._id).catch(() => {});
+      });
+    }
+  }, [news]);
+
   const handleBookmarkToggle = async () => {
     if (!user) {
       window.location.href = "/login";

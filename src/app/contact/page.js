@@ -3,8 +3,6 @@ import { getPage, getSiteSettings } from "@/lib/firestore";
 import ContactContent from "./ContactContent";
 import { createExcerpt } from "@/lib/content-utils";
 
-export const revalidate = 60;
-
 export async function generateMetadata() {
   const [pageData, settings] = await Promise.all([
     getPage("contact"),

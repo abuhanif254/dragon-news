@@ -11,8 +11,6 @@ import {
   SITE_LOGO,
 } from "@/lib/site";
 
-export const revalidate = 60; // ISR: refresh home page every 60 seconds
-
 export async function generateMetadata() {
   const settings = await getSiteSettings();
   const siteName = settings?.siteName || SITE_NAME;

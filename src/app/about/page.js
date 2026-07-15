@@ -1,8 +1,6 @@
 import { getSiteSettings } from "@/lib/firestore";
 import AboutClient from "./AboutClient";
 
-export const revalidate = 60;
-
 export async function generateMetadata() {
   const settings = await getSiteSettings();
   const siteName = settings?.siteName || "The Brain";

@@ -10,8 +10,7 @@ export const getSingleNews = async (id) => {
     const projectId = db.app.options.projectId;
     const apiKey = db.app.options.apiKey;
     const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/news/${id}?key=${apiKey}`;
-
-    const response = await fetchWithRetry(url, { next: { revalidate: 60 } });
+    const response = await fetchWithRetry(url, { next: { tags: ["news"] } });
 
     if (!response.ok) {
       throw new Error("Article not found.");

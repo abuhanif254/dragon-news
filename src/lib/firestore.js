@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore";
 import { normalizeArticle } from "@/lib/content-utils";
 import { fetchWithRetry } from "@/utils/fetchWithRetry";
+import { triggerRevalidation } from "./actions";
 
 // Collection reference
 // Get all news
@@ -107,6 +108,7 @@ export async function createNews(newsData) {
       approvedAt: status === "approved" ? serverTimestamp() : null,
     });
     
+    await triggerRevalidation("news");
     return { id: docRef.id, ...newsData };
   } catch (error) {
     throw error;
@@ -133,6 +135,7 @@ export const updateNewsStatus = async (id, status) => {
     }
 
     await updateDoc(docRef, updates);
+    await triggerRevalidation("news");
     return { status: true };
   } catch (error) {
     console.error("Error updating news status:", error);
@@ -148,6 +151,7 @@ export async function updateNews(id, newsData) {
       ...newsData,
       updatedAt: serverTimestamp(),
     });
+    await triggerRevalidation("news");
     return { id, ...newsData };
   } catch (error) {
     console.error("Error updating news:", error);
@@ -160,6 +164,7 @@ export async function deleteNews(id) {
   try {
     const docRef = doc(db, "news", id);
     await deleteDoc(docRef);
+    await triggerRevalidation("news");
     return { success: true };
   } catch (error) {
     console.error("Error deleting news:", error);
@@ -472,7 +477,7 @@ export const getSiteSettings = async () => {
     const res = await fetchWithRetry(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      next: { revalidate: 60 }
+      next: { tags: ["settings"] }
     });
 
     if (res.ok) {
@@ -493,6 +498,7 @@ export const updateSiteSettings = async (settingsData) => {
   try {
     const docRef = doc(db, "settings", "global");
     await setDoc(docRef, { ...settingsData, updatedAt: serverTimestamp() }, { merge: true });
+    await triggerRevalidation("settings");
     return { status: true };
   } catch (error) {
     console.error("Error updating site settings:", error);
@@ -521,7 +527,7 @@ export const getPage = async (slug) => {
     const res = await fetchWithRetry(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      next: { revalidate: 60 }
+      next: { tags: ["pages"] }
     });
 
     if (res.ok) {
@@ -542,6 +548,7 @@ export const savePage = async (slug, pageData) => {
   try {
     const docRef = doc(db, "pages", slug);
     await setDoc(docRef, { ...pageData, updatedAt: serverTimestamp() }, { merge: true });
+    await triggerRevalidation("pages");
     return { status: true };
   } catch (error) {
     console.error(`Error saving page ${slug}:`, error);

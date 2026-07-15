@@ -16,8 +16,6 @@ import {
 } from "@/lib/site";
 import { createExcerpt, toIsoDate } from "@/lib/content-utils";
 
-export const revalidate = 300; // ISR: revalidate article pages every 5 minutes
-
 export async function generateStaticParams() {
   // Pre-render the most recent 20 articles at build time
   const response = await getAllNews({ includeFallback: false });
@@ -144,9 +142,6 @@ export default async function NewsDetailPage({ params }) {
   }
 
   const news = newsResponse.data;
-
-  // Fire-and-forget view increment (non-blocking)
-  incrementViews(newsId).catch(() => {});
 
   // Smart Recommendation Algorithm:
   // 1. Same category first

@@ -38,7 +38,7 @@ export const getAllNews = async ({ includeFallback = true } = {}) => {
     const response = await fetchWithRetry(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      next: { revalidate: 60 },
+      next: { tags: ["news"] },
       body: JSON.stringify({
         structuredQuery: {
           from: [{ collectionId: "news" }],
