@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import AdsterraBanner from "@/components/shared/AdsterraBanner";
 import SideBar from "@/components/ui/SideBar/SideBar";
 import NewsTicker from "@/components/ui/NewsTicker/NewsTicker";
 import SearchBox from "@/components/ui/SearchBox/SearchBox";
@@ -49,6 +50,11 @@ export default function HomeClient({ allNews, error }) {
     <Box>
       <Box className="fade-in-up" sx={{ animationDelay: '0.1s' }}>
         <NewsTicker allNews={allNews} />
+      </Box>
+
+      {/* 728x90 Top Leaderboard Ad */}
+      <Box className="fade-in-up" sx={{ animationDelay: '0.3s', mt: 3, display: { xs: 'none', md: 'block' } }}>
+        <AdsterraBanner adKey="c2aa037e57084facffa3af8c79667de9" width={728} height={90} />
       </Box>
 
       {/* Magazine Grid */}

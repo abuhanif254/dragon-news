@@ -33,6 +33,7 @@ import { useState, useEffect } from "react";
 import { subscribeToAuth } from "@/lib/auth-service";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
+import AdsterraBanner from "@/components/shared/AdsterraBanner";
 
 const readingTime = (text = "") =>
   Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
@@ -361,6 +362,11 @@ export default function NewsDetailClient({ news, related, contentNode }) {
               </Stack>
             </Stack>
 
+            {/* 728x90 Banner Before Article (Desktop Only) */}
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', mb: 4, mt: 2 }}>
+              <AdsterraBanner adKey="c2aa037e57084facffa3af8c79667de9" width={728} height={90} />
+            </Box>
+
             {/* Audio Narrator */}
             <Box className="no-print">
               <AudioNarrator text={news.details} />
@@ -505,6 +511,11 @@ export default function NewsDetailClient({ news, related, contentNode }) {
             
             {/* Author Box */}
             <AuthorCard author={news.author} category={news.category} />
+
+            {/* 300x250 Sidebar Ad */}
+            <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+              <AdsterraBanner adKey="7b4ab590c7e6c0ec63293079a2da40bd" width={300} height={250} />
+            </Box>
 
             {/* Share Buttons (Mobile/Tablet only, hidden on large desktop where floating bar is) */}
             <Box sx={{ display: { xs: "block", lg: "none" }, mb: 4 }}>

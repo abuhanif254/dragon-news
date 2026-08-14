@@ -2,6 +2,7 @@ import React from "react";
 import DOMPurify from "isomorphic-dompurify";
 import parse from "html-react-parser";
 import Image from "next/image";
+import AdsterraBanner from "./AdsterraBanner";
 
 // Utility to create URL-safe IDs from text
 export const generateSlug = (text) => {
@@ -37,8 +38,27 @@ export default function RichTextRenderer({ content }) {
     ADD_TAGS: ['iframe'] // sometimes useful for embedded videos
   });
 
-  const parsedReactNodes = parse(sanitizedContent, {
+  // Inject a placeholder for the In-Article Ad after the 2nd paragraph
+  let pCount = 0;
+  const withAdPlaceholder = sanitizedContent.replace(/<\/p>/gi, (match) => {
+    pCount++;
+    if (pCount === 2) {
+      return `${match}<div id="adsterra-in-article-placeholder"></div>`;
+    }
+    return match;
+  });
+
+  const parsedReactNodes = parse(withAdPlaceholder, {
     replace: (domNode) => {
+      // Replace the placeholder with the actual Adsterra React component
+      if (domNode.type === 'tag' && domNode.attribs && domNode.attribs.id === 'adsterra-in-article-placeholder') {
+        return (
+          <div className="my-8 flex justify-center w-full clear-both">
+            <AdsterraBanner adKey="7b4ab590c7e6c0ec63293079a2da40bd" width={300} height={250} />
+          </div>
+        );
+      }
+
       if (domNode.type === 'tag' && domNode.name === 'img') {
         const { src, alt, width, height } = domNode.attribs;
         

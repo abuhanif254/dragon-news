@@ -226,6 +226,15 @@ export default async function RootLayout({ children }) {
           siteDescription={siteDescription}
           ogImage={ogImage}
         />
+        {/* Adsterra Social Bar Ads (Native Injection to bypass Next.js) */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            var socialBar = document.createElement('script');
+            socialBar.type = 'text/javascript';
+            socialBar.src = 'https://pl30837550.effectivecpmnetwork.com/d8/f0/18/d8f0189b81e55fb43556ba6df0ee60fc.js';
+            document.head.appendChild(socialBar);
+          `
+        }} />
       </head>
       <body style={{ fontFamily: "var(--font-inter)", margin: 0 }}>
         {/* Monetag Push Notification Ads */}
