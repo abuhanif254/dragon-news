@@ -12,11 +12,23 @@ export async function GET() {
   // Google News Sitemap: only articles published in the last 48 hours
   const twoDaysAgo = Date.now() - 48 * 60 * 60 * 1000;
 
-  const entries = articles
-    .filter((article) => {
-      const published = parseDate(article.publishedAt || article.author?.published_date);
-      return published && published.getTime() >= twoDaysAgo;
-    })
+  let recentArticles = articles.filter((article) => {
+    const published = parseDate(article.publishedAt || article.author?.published_date);
+    return published && published.getTime() >= twoDaysAgo;
+  });
+
+  // To prevent Google Search Console "Missing XML tag" error when the sitemap is empty,
+  // we fallback to including the single most recent article if there are none in the last 48 hours.
+  if (recentArticles.length === 0 && articles.length > 0) {
+    const sortedArticles = [...articles].sort((a, b) => {
+      const dateA = parseDate(a.publishedAt || a.author?.published_date) || new Date(0);
+      const dateB = parseDate(b.publishedAt || b.author?.published_date) || new Date(0);
+      return dateB.getTime() - dateA.getTime();
+    });
+    recentArticles = [sortedArticles[0]];
+  }
+
+  const entries = recentArticles
     .map((article) => {
       const published = toIsoDate(article.publishedAt || article.author?.published_date);
       const imageUrl = absoluteImage(article.image_url || article.thumbnail_url);
