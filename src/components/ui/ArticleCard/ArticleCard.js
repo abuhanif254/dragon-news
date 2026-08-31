@@ -87,49 +87,48 @@ export default function ArticleCard({ article, layout = "vertical", showExcerpt 
   const isHorizontal = layout === "horizontal";
 
   return (
-    <Link href={`/news/${article.id || article._id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
-      <Card 
-        className="news-card" 
-        sx={{ 
-          position: 'relative',
-          borderRadius: 3, 
-          height: '100%', 
-          display: 'flex', 
-          flexDirection: isHorizontal ? { xs: 'column', sm: 'row' } : 'column',
-          bgcolor: 'background.paper',
+    <Card 
+      className="news-card" 
+      sx={{ 
+        position: 'relative',
+        borderRadius: 3, 
+        height: '100%', 
+        display: 'flex', 
+        flexDirection: isHorizontal ? { xs: 'column', sm: 'row' } : 'column',
+        bgcolor: 'background.paper',
+      }}
+    >
+      <IconButton
+        onClick={handleBookmarkToggle}
+        disabled={bookmarkLoading}
+        sx={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          zIndex: 10,
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(4px)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          color: isBookmarked ? 'var(--brand-red)' : 'rgba(0, 0, 0, 0.54)',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            transform: 'scale(1.1)',
+            color: 'var(--brand-red)',
+          }
         }}
       >
-        <IconButton
-          onClick={handleBookmarkToggle}
-          disabled={bookmarkLoading}
-          sx={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            zIndex: 10,
-            backgroundColor: 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(4px)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            color: isBookmarked ? 'var(--brand-red)' : 'rgba(0, 0, 0, 0.54)',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              transform: 'scale(1.1)',
-              color: 'var(--brand-red)',
-            }
-          }}
-        >
-          {isBookmarked ? <BookmarkIcon fontSize="small" /> : <BookmarkBorderIcon fontSize="small" />}
-        </IconButton>
-        <CardActionArea sx={{ display: 'flex', flexDirection: isHorizontal ? { xs: 'column', sm: 'row' } : 'column', height: '100%', alignItems: 'stretch' }}>
-          <Box sx={{ 
-            position: 'relative', 
-            width: isHorizontal ? { xs: '100%', sm: '40%' } : '100%', 
-            flex: isHorizontal ? 'none' : 1,
-            minHeight: isHorizontal ? { xs: 200, sm: 'auto' } : 240,
-            flexShrink: 0,
-            overflow: 'hidden'
-          }}>
+        {isBookmarked ? <BookmarkIcon fontSize="small" /> : <BookmarkBorderIcon fontSize="small" />}
+      </IconButton>
+      <CardActionArea component={Link} href={`/news/${article.id || article._id}`} sx={{ display: 'flex', flexDirection: isHorizontal ? { xs: 'column', sm: 'row' } : 'column', height: '100%', alignItems: 'stretch' }}>
+        <Box sx={{ 
+          position: 'relative', 
+          width: isHorizontal ? { xs: '100%', sm: '40%' } : '100%', 
+          flex: isHorizontal ? 'none' : 1,
+          minHeight: isHorizontal ? { xs: 200, sm: 'auto' } : 240,
+          flexShrink: 0,
+          overflow: 'hidden'
+        }}>
             <Image
               src={article.thumbnail_url || "https://picsum.photos/600/400"}
               alt={article.title}
@@ -203,6 +202,5 @@ export default function ArticleCard({ article, layout = "vertical", showExcerpt 
           </CardContent>
         </CardActionArea>
       </Card>
-    </Link>
   );
 }

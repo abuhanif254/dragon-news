@@ -17,7 +17,7 @@ import {
   updateDoc,
   serverTimestamp 
 } from "firebase/firestore";
-import { isAdminEmail } from "@/lib/site";
+import { isAdminEmail, ADMIN_EMAIL } from "@/lib/site";
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
@@ -186,7 +186,7 @@ export const getAllUsers = async () => {
 
 export const updateUserRole = async (user, newRole) => {
   if (newRole === "admin" && !isAdminEmail(user.email)) {
-    throw new Error("Only mohammadbitullah@gmail.com can hold the admin role.");
+    throw new Error(`Only ${ADMIN_EMAIL} can hold the admin role.`);
   }
 
   const nextRole = isAdminEmail(user.email) ? "admin" : newRole;

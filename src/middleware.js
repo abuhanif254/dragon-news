@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export function proxy(request) {
+export function middleware(request) {
   // Check if trying to access dashboard
   if (request.nextUrl.pathname.startsWith("/dashboard")) {
     const token = request.cookies.get("admin_token")?.value;
