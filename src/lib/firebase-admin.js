@@ -1,20 +1,21 @@
-import admin from "firebase-admin";
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
-if (!admin.apps.length) {
+if (!getApps().length) {
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     try {
       const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
+      initializeApp({
+        credential: cert(serviceAccount),
       });
     } catch (error) {
       console.error("Firebase Admin config error:", error);
     }
   } else {
-    admin.initializeApp({
+    initializeApp({
       projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
     });
   }
 }
 
-export const adminAuth = admin.auth();
+export const adminAuth = getAuth();
