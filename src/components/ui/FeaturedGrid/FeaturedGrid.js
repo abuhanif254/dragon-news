@@ -15,9 +15,9 @@ export default function FeaturedGrid({ articles = [], title = "Featured Stories"
         </Typography>
       </Box>
 
-      <Grid container spacing={4}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ width: "100%", m: 0 }}>
         {articles.map((article, index) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={article.id || article._id}>
+          <Grid item xs={12} sm={6} md={4} lg={3} key={article.id || article._id} sx={{ pl: { xs: 0, sm: 2, md: 3 } }}>
             <ArticleCard article={article} priority={index < 4} />
           </Grid>
         ))}

@@ -240,11 +240,11 @@ export default function NewsDetailClient({ news, related, contentNode }) {
       </Box>
 
       {/* ── Main Layout Grid ── */}
-      <Grid container spacing={{ xs: 4, md: 6 }} sx={{ position: "relative" }}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 6 }} sx={{ position: "relative", width: "100%", m: 0 }}>
         
         {/* Left Column: Article Content */}
-        <Grid item xs={12} md={8}>
-          <Box component="article" sx={{ pr: { md: 2 }, pl: { lg: 10 }, position: "relative" }}>
+        <Grid item xs={12} md={8} sx={{ pl: { xs: 0, sm: 2, md: 3 } }}>
+          <Box component="article" sx={{ pr: { md: 2 }, pl: { lg: 10 }, position: "relative", width: "100%", overflowX: "hidden" }}>
             
             {/* Floating Share Bar (Desktop Left Side - Inside reserved padding) */}
             <Box className="no-print" sx={{ 
@@ -499,7 +499,7 @@ export default function NewsDetailClient({ news, related, contentNode }) {
         </Grid>
 
         {/* Right Column: Sticky Sidebar */}
-        <Grid item xs={12} md={4} className="no-print">
+        <Grid item xs={12} md={4} className="no-print" sx={{ pl: { xs: 0, sm: 2, md: 3 }, mt: { xs: 4, md: 0 } }}>
           <Stack spacing={4} sx={{ position: "sticky", top: 100, width: "100%" }}>
             
             {/* Table of Contents */}

@@ -182,13 +182,21 @@ export default function AdsterraBanner({
           onerror="window.parent.postMessage({ type: 'ADSTERRA_FAILED', key: '${key}' }, '*');"
         ></script>
         <script type="text/javascript">
-          // Auto-collapse if no ad container was rendered after 4 seconds (e.g. AdBlock or zero fill)
+          // Auto-collapse if no ad container was rendered after 5 seconds (e.g. AdBlock or zero fill)
           setTimeout(function() {
-            var hasAd = document.body.querySelectorAll('iframe, img, a, div[id*="atContainer"]').length > 0;
-            if (!hasAd) {
+            var elements = document.body.querySelectorAll('iframe, img, a, div[id*="atContainer"]');
+            var hasRenderedAd = false;
+            for (var i = 0; i < elements.length; i++) {
+              var el = elements[i];
+              if (el.offsetWidth > 10 && el.offsetHeight > 10) {
+                hasRenderedAd = true;
+                break;
+              }
+            }
+            if (!hasRenderedAd) {
               window.parent.postMessage({ type: 'ADSTERRA_EMPTY', key: '${key}' }, '*');
             }
-          }, 4000);
+          }, 5000);
         </script>
       </body>
     </html>

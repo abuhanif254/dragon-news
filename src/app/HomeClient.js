@@ -63,8 +63,8 @@ export default function HomeClient({ allNews, error }) {
       </Box>
 
       {/* Two Column Layout for Recent News & Sidebar */}
-      <Grid container spacing={5} sx={{ mt: 4 }} className="fade-in-up" style={{ animationDelay: '0.6s' }}>
-        <Grid item xs={12} md={8}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ mt: 4, width: "100%", m: 0 }} className="fade-in-up" style={{ animationDelay: '0.6s' }}>
+        <Grid item xs={12} md={8} sx={{ pl: { xs: 0, sm: 2, md: 3 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 4, pb: 2, borderBottom: '2px solid', borderColor: 'divider' }}>
             <WhatshotIcon sx={{ color: 'var(--brand-red)', mr: 1.5, fontSize: 32 }} />
             <Typography variant="h4" component="h2" fontWeight={900} sx={{ fontFamily: "'Playfair Display', serif" }}>
@@ -78,7 +78,7 @@ export default function HomeClient({ allNews, error }) {
           </Stack>
         </Grid>
         
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={4} sx={{ pl: { xs: 0, sm: 2, md: 3 }, mt: { xs: 4, md: 0 } }}>
           <SideBar allNews={allNews} />
         </Grid>
       </Grid>

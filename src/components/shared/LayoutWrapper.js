@@ -31,6 +31,8 @@ export const LayoutWrapper = ({ children }) => {
         className="min-h-screen"
         sx={{
           maxWidth: { xl: "1480px", lg: "1320px" },
+          width: "100%",
+          overflowX: "hidden",
           px: { xs: 2, sm: 3, md: 4 },
           // Reserve bottom padding on mobile when sticky footer ad is active
           // to prevent obscuring content, buttons, or page footer

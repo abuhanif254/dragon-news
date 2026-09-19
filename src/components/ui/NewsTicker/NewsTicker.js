@@ -7,16 +7,26 @@ const NewsTicker = ({ allNews: data = [] }) => {
   if (data.length === 0) return null;
 
   return (
-    <Box className="my-4 flex items-center bg-black text-white p-2 rounded overflow-hidden relative">
+    <Box sx={{ my: 2, display: "flex", alignItems: "center", bgcolor: "#000", color: "#fff", p: 1, borderRadius: 1, overflow: "hidden", position: "relative", width: "100%", maxWidth: "100%", minWidth: 0 }}>
       <Typography
         variant="body2"
         fontWeight="bold"
-        className="bg-red-500 px-3 py-1 rounded mr-4 whitespace-nowrap z-10"
+        sx={{
+          bgcolor: "#e53e3e",
+          px: { xs: 1.5, sm: 2 },
+          py: 0.5,
+          borderRadius: 1,
+          mr: { xs: 1.5, sm: 2 },
+          whiteSpace: "nowrap",
+          zIndex: 10,
+          fontSize: { xs: "0.75rem", sm: "0.875rem" },
+          flexShrink: 0,
+        }}
       >
         Breaking News
       </Typography>
 
-      <Box className="overflow-hidden whitespace-nowrap w-full relative flex items-center">
+      <Box sx={{ overflow: "hidden", whiteSpace: "nowrap", width: "100%", position: "relative", display: "flex", alignItems: "center", minWidth: 0, flex: 1 }}>
         <style>
           {`
             @keyframes marquee {
