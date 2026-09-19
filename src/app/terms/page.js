@@ -1,5 +1,6 @@
 import { getPage, getSiteSettings } from "@/lib/firestore";
 import { createExcerpt } from "@/lib/content-utils";
+import { SITE_URL } from "@/lib/site";
 import LegalPageLayout from "@/components/ui/LegalPageLayout";
 
 export async function generateMetadata() {
@@ -12,14 +13,26 @@ export async function generateMetadata() {
   const title = pageData?.title || "Terms of Service";
   const rawContent = pageData?.content || "";
   const description = createExcerpt(rawContent, 160) || `Terms of Service for ${siteName}.`;
+  const canonicalUrl = `${SITE_URL}/terms`;
 
   return {
     title: `${title} | ${siteName}`,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title: `${title} | ${siteName}`,
       description,
-    }
+      url: canonicalUrl,
+      siteName,
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: `${title} | ${siteName}`,
+      description,
+    },
   };
 }
 

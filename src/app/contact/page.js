@@ -2,6 +2,7 @@ import { Box, Typography } from "@mui/material";
 import { getPage, getSiteSettings } from "@/lib/firestore";
 import ContactContent from "./ContactContent";
 import { createExcerpt } from "@/lib/content-utils";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 
 export async function generateMetadata() {
   const [pageData, settings] = await Promise.all([
@@ -9,18 +10,40 @@ export async function generateMetadata() {
     getSiteSettings()
   ]);
 
-  const siteName = settings?.siteName || "The Brain";
+  const siteName = settings?.siteName || SITE_NAME;
   const title = pageData?.title || "Contact Us";
   const rawContent = pageData?.content || "";
   const description = createExcerpt(rawContent, 160) || `Get in touch with ${siteName}.`;
+  const canonicalUrl = `${SITE_URL}/contact`;
+  const ogImageUrl = `${SITE_URL}/api/og?title=${encodeURIComponent("Get in Touch with Our Editorial Team")}&category=Contact`;
 
   return {
     title: `${title} | ${siteName}`,
     description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title: `${title} | ${siteName}`,
       description,
-    }
+      url: canonicalUrl,
+      siteName,
+      type: "website",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `Contact ${siteName}`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | ${siteName}`,
+      description,
+      images: [ogImageUrl],
+    },
   };
 }
 

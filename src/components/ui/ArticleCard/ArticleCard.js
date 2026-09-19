@@ -13,6 +13,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { createExcerpt } from "@/lib/content-utils";
+import { articlePath } from "@/lib/site";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
@@ -120,7 +121,7 @@ export default function ArticleCard({ article, layout = "vertical", showExcerpt 
       >
         {isBookmarked ? <BookmarkIcon fontSize="small" /> : <BookmarkBorderIcon fontSize="small" />}
       </IconButton>
-      <CardActionArea component={Link} href={`/news/${article.id || article._id}`} sx={{ display: 'flex', flexDirection: isHorizontal ? { xs: 'column', sm: 'row' } : 'column', height: '100%', alignItems: 'stretch' }}>
+      <CardActionArea component={Link} href={articlePath(article)} sx={{ display: 'flex', flexDirection: isHorizontal ? { xs: 'column', sm: 'row' } : 'column', height: '100%', alignItems: 'stretch' }}>
         <Box sx={{ 
           position: 'relative', 
           width: isHorizontal ? { xs: '100%', sm: '40%' } : '100%', 
@@ -130,7 +131,7 @@ export default function ArticleCard({ article, layout = "vertical", showExcerpt 
           overflow: 'hidden'
         }}>
             <Image
-              src={article.thumbnail_url || "https://picsum.photos/600/400"}
+              src={article.thumbnail_url || article.image_url || "https://picsum.photos/600/400"}
               alt={article.title}
               fill
               priority={priority}

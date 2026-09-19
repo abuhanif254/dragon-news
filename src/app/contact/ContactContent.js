@@ -22,7 +22,6 @@ import SendIcon from "@mui/icons-material/Send";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import LanguageIcon from "@mui/icons-material/Language";
-import { saveContactMessage } from "@/lib/firestore";
 import DOMPurify from "isomorphic-dompurify";
 
 const OFFICE_SCHEDULE = [
@@ -63,7 +62,7 @@ export default function ContactContent({ pageData }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [officeOpen, setOfficeOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "", hp_website: "" });
   const [submitError, setSubmitError] = useState("");
 
   useEffect(() => {
@@ -93,12 +92,20 @@ export default function ContactContent({ pageData }) {
     setSubmitError("");
 
     try {
-      await saveContactMessage(form);
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to send message. Please try again later.");
+      }
       setOpen(true);
-      setForm({ name: "", email: "", subject: "", message: "" });
+      setForm({ name: "", email: "", subject: "", message: "", hp_website: "" });
     } catch (err) {
       console.error("Submit error:", err);
-      setSubmitError("Failed to send message. Please try again later.");
+      setSubmitError(err.message || "Failed to send message. Please try again later.");
     } finally {
       setLoading(false);
     }
@@ -228,6 +235,16 @@ export default function ContactContent({ pageData }) {
             )}
 
             <Box component="form" onSubmit={handleSubmit} noValidate>
+              <input
+                type="text"
+                name="hp_website"
+                value={form.hp_website}
+                onChange={handleChange("hp_website")}
+                tabIndex={-1}
+                autoComplete="off"
+                style={{ position: "absolute", left: "-9999px", opacity: 0 }}
+                aria-hidden="true"
+              />
               <Grid container spacing={2.5}>
                 <Grid item xs={12} sm={6}>
                   <TextField

@@ -1,8 +1,25 @@
 import { NextResponse } from "next/server";
 import { getAllNews } from "@/utils/getAllNews";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+
+// Rate limit: max 60 search queries per minute per IP
+const searchLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 60,
+  name: "search",
+});
 
 export async function GET(req) {
   try {
+    const ip = getClientIp(req);
+    const limit = searchLimiter(ip);
+    if (limit.isLimited) {
+      return NextResponse.json(
+        { error: "Too many search requests. Please slow down." },
+        { status: 429 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q")?.slice(0, 100)?.toLowerCase().trim() || "";
     const category = searchParams.get("category")?.slice(0, 50) || "";

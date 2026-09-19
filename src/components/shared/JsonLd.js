@@ -88,7 +88,7 @@ export function buildOrganizationSchema({
       "@type": "ContactPoint",
       email,
       contactType: "editorial",
-      availableLanguage: ["en"],
+      availableLanguage: ["en", "bn"],
     },
     publishingPrinciples: `${siteUrl}/about`,
     ethicsPolicy: `${siteUrl}/about`,
@@ -106,8 +106,18 @@ export function buildNewsArticleSchema({
   siteName,
   logo,
 }) {
-  const { absoluteImage, articleUrl, authorUrl, toIsoDate, createExcerpt } =
+  const { absoluteImage, articleUrl, authorUrl, createExcerpt } =
     require("@/lib/site");
+  const { isBengali } = require("@/lib/content-utils");
+
+  const isBangla = isBengali(article.title + (article.details || ""));
+  const inLanguage = article.language || (isBangla ? "bn" : "en");
+  const wordCount = (article.details || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+  const keywords = [
+    article.category,
+    ...(article.seoMeta?.tags || []),
+    ...(article.seoMeta?.focusKeyword ? [article.seoMeta.focusKeyword] : []),
+  ].filter(Boolean).join(", ");
 
   return {
     "@context": "https://schema.org",
@@ -120,8 +130,10 @@ export function buildNewsArticleSchema({
     headline: article.title,
     description: createExcerpt?.(article.details, 160) || "",
     articleSection: article.category,
-    inLanguage: "en",
-    keywords: article.category,
+    articleBody: (article.details || "").replace(/<[^>]+>/g, " ").slice(0, 1000),
+    wordCount,
+    inLanguage,
+    keywords: keywords || article.category,
     image: {
       "@type": "ImageObject",
       url: absoluteImage(article.image_url || article.thumbnail_url),

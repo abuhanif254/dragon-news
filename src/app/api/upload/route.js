@@ -1,7 +1,24 @@
 import { NextResponse } from "next/server";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+
+// Rate limit: max 15 image uploads per hour per IP to protect ImgBB quotas
+const uploadLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 15,
+  name: "upload",
+});
 
 export async function POST(req) {
   try {
+    const ip = getClientIp(req);
+    const limit = uploadLimiter(ip);
+    if (limit.isLimited) {
+      return NextResponse.json(
+        { success: false, error: "Upload limit exceeded (max 15 per hour). Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get("image");
 

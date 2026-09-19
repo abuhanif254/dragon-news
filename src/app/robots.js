@@ -4,9 +4,22 @@ export default function robots() {
   return {
     rules: [
       {
-        // Main crawlers — full access to public content
+        // Main crawlers — full access to public content and dynamic social cards
         userAgent: "*",
-        allow: ["/", "/news/", "/categories/", "/authors/", "/about", "/contact", "/pages/"],
+        allow: [
+          "/",
+          "/news/",
+          "/categories/",
+          "/authors/",
+          "/about",
+          "/contact",
+          "/privacy-policy",
+          "/terms",
+          "/cookies",
+          "/pages/",
+          "/api/og", // Unblock dynamic OpenGraph generator for social media scrapers
+          "/llms.txt",
+        ],
         disallow: [
           "/api/",
           "/dashboard/",
@@ -18,7 +31,13 @@ export default function robots() {
         ],
       },
       {
-        // Block AI training scrapers
+        // Allow AI Search & Citation Engines (ChatGPT Search, Perplexity)
+        userAgent: ["OAI-SearchBot", "PerplexityBot"],
+        allow: ["/", "/news/", "/categories/", "/authors/", "/about", "/contact", "/llms.txt"],
+        disallow: ["/api/", "/dashboard/", "/login", "/register"],
+      },
+      {
+        // Block indiscriminate AI mass-training dataset scrapers
         userAgent: [
           "GPTBot",
           "Google-Extended",

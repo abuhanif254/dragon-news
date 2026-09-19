@@ -5,7 +5,7 @@ import {
   Card, CardContent, Divider, Chip, IconButton, Tooltip, Paper 
 } from "@mui/material";
 import { getAllNews } from "@/utils/getAllNews";
-import { SITE_NAME, SITE_URL, SITE_TWITTER_HANDLE, slugify } from "@/lib/site";
+import { SITE_NAME, SITE_URL, SITE_TWITTER_HANDLE, slugify, articlePath } from "@/lib/site";
 
 export const revalidate = 3600; // Revalidate author pages hourly
 import { getAuthorProfile } from "@/lib/firestore";
@@ -329,7 +329,7 @@ export default async function AuthorProfilePage({ params }) {
           {authorArticles.length > 0 ? (
             authorArticles.map((article) => (
               <Grid item xs={12} sm={6} md={4} key={article.id}>
-                <Link href={`/news/${article.id}`}>
+                <Link href={articlePath(article)}>
                   <Card sx={{ 
                     height: "100%", 
                     borderRadius: 3, 
@@ -340,7 +340,7 @@ export default async function AuthorProfilePage({ params }) {
                   }}>
                     <Box sx={{ position: "relative", height: 200 }}>
                       <Image 
-                        src={article.thumbnail_url || "https://picsum.photos/400/300"} 
+                        src={article.thumbnail_url || article.image_url || "https://picsum.photos/400/300"} 
                         alt={article.title} 
                         fill
                         style={{ objectFit: "cover" }}

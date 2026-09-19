@@ -9,6 +9,7 @@ import {
   SITE_KEYWORDS,
   DEFAULT_OG_IMAGE,
   SITE_LOGO,
+  articleUrl,
 } from "@/lib/site";
 
 export async function generateMetadata() {
@@ -96,7 +97,7 @@ export default async function HomePage() {
           itemListElement: allNews.slice(0, 10).map((article, i) => ({
             "@type": "ListItem",
             position: i + 1,
-            url: `${SITE_URL}/news/${encodeURIComponent(article.id || article._id)}`,
+            url: articleUrl(article),
             name: article.title,
           })),
         }

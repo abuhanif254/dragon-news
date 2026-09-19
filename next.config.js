@@ -77,8 +77,8 @@ const nextConfig = {
         ],
       },
       {
-        // Sitemap & RSS — allow search engine caching
-        source: "/(sitemap.xml|news-sitemap.xml|rss.xml|robots.txt)",
+        // Sitemap, RSS, Robots & AI Manifest — allow search engine caching
+        source: "/(sitemap.xml|news-sitemap.xml|rss.xml|robots.txt|llms.txt)",
         headers: [
           {
             key: "Cache-Control",

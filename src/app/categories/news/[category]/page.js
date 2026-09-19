@@ -17,6 +17,9 @@ export async function generateMetadata({ params }) {
     description: `Read the latest ${formattedCategory} reporting, independent analysis, and perspectives from ${siteName}.`,
     alternates: {
       canonical: categoryCanonical,
+      types: {
+        "application/rss+xml": `${SITE_URL}/rss.xml?category=${encodeURIComponent(category.toLowerCase())}`,
+      },
     },
     openGraph: {
       title: `${formattedCategory} News & Analysis | ${siteName}`,
@@ -25,11 +28,22 @@ export async function generateMetadata({ params }) {
       siteName,
       type: "website",
       locale: "en_US",
+      images: [
+        {
+          url: `${SITE_URL}/api/og?title=${encodeURIComponent(formattedCategory + " News & Analysis")}&category=${encodeURIComponent(formattedCategory)}`,
+          width: 1200,
+          height: 630,
+          alt: `${formattedCategory} News & Analysis`,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${formattedCategory} News & Analysis | ${siteName}`,
       description: `Read the latest ${formattedCategory} reporting, independent analysis, and perspectives from ${siteName}.`,
+      images: [
+        `${SITE_URL}/api/og?title=${encodeURIComponent(formattedCategory + " News & Analysis")}&category=${encodeURIComponent(formattedCategory)}`,
+      ],
     },
   };
 }

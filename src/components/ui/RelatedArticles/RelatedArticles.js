@@ -2,6 +2,7 @@
 import React from "react";
 import { Box, Typography, Grid, Card, CardContent, Chip, Stack } from "@mui/material";
 import Link from "next/link";
+import { articlePath } from "@/lib/site";
 import SafeImage from "@/components/ui/SafeImage/SafeImage";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -34,7 +35,7 @@ export default function RelatedArticles({ related }) {
           const rTime = getReadingTime(rel.details || "");
           return (
             <Grid item xs={12} sm={6} md={4} key={rel.id || rel._id}>
-              <Link href={`/news/${rel.id || rel._id}`} style={{ textDecoration: "none" }}>
+              <Link href={articlePath(rel)} style={{ textDecoration: "none" }}>
                 <Card
                   sx={{
                     borderRadius: 3,

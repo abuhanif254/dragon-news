@@ -4,6 +4,7 @@ import SafeImage from "../SafeImage/SafeImage";
 import SidebarNewsCard from "./SideBarNewsCard";
 import { getAllNews } from "@/utils/getAllNews";
 import Link from "next/link";
+import { articlePath } from "@/lib/site";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import SendIcon from "@mui/icons-material/Send";
@@ -59,7 +60,7 @@ const SideBar = ({ allNews: data = [] }) => {
         <div className="section-header" style={{ marginBottom: 12 }}>Editor&apos;s Pick</div>
       </Box>
 
-      <Link href={`/news/${heroNews.id || heroNews._id}`} style={{ display: "block" }}>
+      <Link href={articlePath(heroNews)} style={{ display: "block" }}>
         <Card
           className="news-card"
           sx={{
@@ -75,7 +76,6 @@ const SideBar = ({ allNews: data = [] }) => {
               src={heroNews.thumbnail_url || heroNews.image_url}
               fallback="https://picsum.photos/600/400"
               fill
-              unoptimized
               alt={heroNews.title}
               sizes="35vw"
               style={{ objectFit: "cover", transition: "transform 0.4s ease" }}

@@ -10,6 +10,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { createExcerpt } from "@/lib/content-utils";
+import { articlePath } from "@/lib/site";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 /**
@@ -20,7 +21,7 @@ export default function HeroSection({ article }) {
 
   return (
     <Box sx={{ position: "relative", mb: 6, borderRadius: 4, overflow: "hidden", height: { xs: 450, md: 600 } }}>
-      <Link href={`/news/${article.id || article._id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
+      <Link href={articlePath(article)} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
         <CardActionArea sx={{ height: "100%", width: "100%" }}>
           <Image
             src={article.image_url || article.thumbnail_url || "https://picsum.photos/1200/800"}

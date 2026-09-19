@@ -1,8 +1,25 @@
 import { incrementReaction } from "@/lib/firestore";
 import { NextResponse } from "next/server";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+
+// Rate limit: max 30 reaction toggles per minute per IP
+const reactionLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 30,
+  name: "reactions",
+});
 
 export async function POST(req) {
   try {
+    const ip = getClientIp(req);
+    const limit = reactionLimiter(ip);
+    if (limit.isLimited) {
+      return NextResponse.json(
+        { error: "Too many reactions. Please slow down." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { articleId, reactionId } = body;
     const incrementBy = body.incrementBy === -1 ? -1 : 1;
