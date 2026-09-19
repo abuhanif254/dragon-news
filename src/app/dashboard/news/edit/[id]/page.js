@@ -8,6 +8,7 @@ import { useRouter, useParams } from "next/navigation";
 import { getNewsById, updateNews, getCategories, getNewsRevisions, createNewsRevision } from "@/lib/firestore";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import HistoryIcon from "@mui/icons-material/History";
+import PreviewIcon from "@mui/icons-material/Preview";
 import { subscribeToAuth } from "@/lib/auth-service";
 import CustomEditor from "@/components/ui/CustomEditor/CustomEditor";
 import ImageUpload from "@/components/ui/ImageUpload/ImageUpload";
@@ -15,6 +16,7 @@ import SeoMetaFields from "@/components/ui/SeoMetaFields/SeoMetaFields";
 import SeoAnalyzerPanel from "@/components/ui/SeoAnalyzerPanel/SeoAnalyzerPanel";
 import { createExcerpt, stripHtml, generateSlug } from "@/lib/content-utils";
 import RoleGuard from "@/components/auth/RoleGuard";
+import ArticlePreviewModal from "@/components/ui/ArticlePreviewModal/ArticlePreviewModal";
 
 export default function EditNews() {
   const router = useRouter();
@@ -36,6 +38,7 @@ export default function EditNews() {
   const [article, setArticle] = useState(null);
   const [revisions, setRevisions] = useState([]);
   const [activeRevisionId, setActiveRevisionId] = useState(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const wordCount = stripHtml(formData.details).trim().split(/\s+/).filter(Boolean).length;
 
@@ -194,9 +197,28 @@ export default function EditNews() {
   return (
     <RoleGuard allowedRoles={["admin", "writer"]} fallbackTitle="Article Editor">
       <Box maxWidth="1400px" mx="auto">
-        <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} sx={{ mb: 3, fontWeight: "bold", color: "#64748b", textTransform: "none", "&:hover": { color: "#ef4444" } }}>
-          Back to Articles
-        </Button>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+          <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} sx={{ fontWeight: "bold", color: "#64748b", textTransform: "none", "&:hover": { color: "#ef4444" } }}>
+            Back to Articles
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<PreviewIcon />}
+            onClick={() => setPreviewOpen(true)}
+            sx={{
+              fontWeight: 700,
+              borderRadius: 2,
+              textTransform: "none",
+              borderColor: "rgba(0,0,0,0.15)",
+              bgcolor: "white",
+              color: "#0f172a",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              "&:hover": { borderColor: "#c0392b", color: "#c0392b", bgcolor: "rgba(192, 57, 43, 0.04)" },
+            }}
+          >
+            Live Reader Preview
+          </Button>
+        </Stack>
 
       {activeRevisionId && (
         <Alert severity="warning" sx={{ mb: 3, borderRadius: 2.5 }}
@@ -251,11 +273,45 @@ export default function EditNews() {
                   <SeoMetaFields seoMeta={seoMeta} onChange={setSeoMeta} formData={formData} />
                 </Grid>
                 <Grid item xs={12}>
-                  <Button type="submit" variant="contained" size="large" fullWidth disabled={loading}
-                    sx={{ py: 2, fontWeight: "900", letterSpacing: 0.5, borderRadius: 2, background: "linear-gradient(135deg, #ef4444, #f97316)", "&:hover": { background: "linear-gradient(135deg, #dc2626, #ef4444)" } }}
-                  >
-                    {loading ? "Updating Article..." : "UPDATE ARTICLE"}
-                  </Button>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      size="large"
+                      onClick={() => setPreviewOpen(true)}
+                      startIcon={<PreviewIcon />}
+                      sx={{
+                        py: 2,
+                        fontWeight: 700,
+                        borderRadius: 2,
+                        textTransform: "none",
+                        borderColor: "rgba(0,0,0,0.15)",
+                        bgcolor: "white",
+                        color: "#334155",
+                        flex: { sm: 1 },
+                        "&:hover": { borderColor: "#c0392b", color: "#c0392b", bgcolor: "rgba(192, 57, 43, 0.04)" },
+                      }}
+                    >
+                      Live Preview
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      disabled={loading}
+                      sx={{
+                        py: 2,
+                        fontWeight: "900",
+                        letterSpacing: 0.5,
+                        borderRadius: 2,
+                        background: "linear-gradient(135deg, #ef4444, #f97316)",
+                        flex: { sm: 2 },
+                        "&:hover": { background: "linear-gradient(135deg, #dc2626, #ef4444)" },
+                      }}
+                    >
+                      {loading ? "Updating Article..." : "UPDATE ARTICLE"}
+                    </Button>
+                  </Stack>
                 </Grid>
               </Grid>
             </form>
@@ -296,6 +352,18 @@ export default function EditNews() {
           </Stack>
         </Grid>
       </Grid>
+
+      {/* Live Reader Preview Studio Modal */}
+      <ArticlePreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        formData={formData}
+        seoMeta={seoMeta}
+        user={user}
+        hasPoll={Boolean(article?.poll)}
+        pollQuestion={article?.poll?.question || ""}
+        pollOptions={article?.poll?.options ? Object.values(article.poll.options).map((o) => o.text) : []}
+      />
     </Box>
     </RoleGuard>
   );

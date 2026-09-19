@@ -20,6 +20,7 @@ import SeoMetaFields from "@/components/ui/SeoMetaFields/SeoMetaFields";
 import SeoAnalyzerPanel from "@/components/ui/SeoAnalyzerPanel/SeoAnalyzerPanel";
 import { createExcerpt, stripHtml } from "@/lib/content-utils";
 import RoleGuard from "@/components/auth/RoleGuard";
+import ArticlePreviewModal from "@/components/ui/ArticlePreviewModal/ArticlePreviewModal";
 
 export default function CreateNews() {
   const router = useRouter();
@@ -52,6 +53,7 @@ export default function CreateNews() {
   const [hasDraft, setHasDraft] = useState(false);
   const [publishWarningOpen, setPublishWarningOpen] = useState(false);
   const [pendingSubmit, setPendingSubmit] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // Check for saved draft on mount
   useEffect(() => {
@@ -251,13 +253,32 @@ export default function CreateNews() {
   return (
     <RoleGuard allowedRoles={["admin", "writer"]} fallbackTitle="Publish Article">
       <Box>
-        <Button
-        startIcon={<ArrowBackIcon />}
-        onClick={() => router.back()}
-        sx={{ mb: 3, fontWeight: 600, color: "#64748b", textTransform: "none", "&:hover": { color: "#ef4444" } }}
-      >
-        Back to Articles
-      </Button>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+          <Button
+            startIcon={<ArrowBackIcon />}
+            onClick={() => router.back()}
+            sx={{ fontWeight: 600, color: "#64748b", textTransform: "none", "&:hover": { color: "#ef4444" } }}
+          >
+            Back to Articles
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<PreviewIcon />}
+            onClick={() => setPreviewOpen(true)}
+            sx={{
+              fontWeight: 700,
+              borderRadius: 2,
+              textTransform: "none",
+              borderColor: "rgba(0,0,0,0.15)",
+              bgcolor: "white",
+              color: "#0f172a",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              "&:hover": { borderColor: "#c0392b", color: "#c0392b", bgcolor: "rgba(192, 57, 43, 0.04)" },
+            }}
+          >
+            Live Reader Preview
+          </Button>
+        </Stack>
 
       {hasDraft && (
         <Alert
@@ -376,20 +397,49 @@ export default function CreateNews() {
                       )}
                     </Box>
 
-                    {/* Publish Button */}
-                    <Button
-                      type="submit" variant="contained" size="large" fullWidth
-                      disabled={loading}
-                      startIcon={<PublishIcon />}
-                      sx={{
-                        py: 1.5, fontWeight: 800, borderRadius: 2, textTransform: "none", fontSize: "1rem",
-                        background: loading ? undefined : "linear-gradient(135deg, #ef4444, #f97316)",
-                        boxShadow: "0 4px 12px rgba(239,68,68,0.3)",
-                        "&:hover": { background: "linear-gradient(135deg, #dc2626, #ef4444)" },
-                      }}
-                    >
-                      {loading ? "Saving..." : user?.role === "admin" ? "Publish Article" : "Submit for Review"}
-                    </Button>
+                    {/* Action Buttons */}
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                      <Button
+                        type="button"
+                        variant="outlined"
+                        size="large"
+                        onClick={() => setPreviewOpen(true)}
+                        startIcon={<PreviewIcon />}
+                        sx={{
+                          py: 1.5,
+                          fontWeight: 700,
+                          borderRadius: 2,
+                          textTransform: "none",
+                          borderColor: "rgba(0,0,0,0.15)",
+                          bgcolor: "white",
+                          color: "#334155",
+                          flex: { sm: 1 },
+                          "&:hover": { borderColor: "#c0392b", color: "#c0392b", bgcolor: "rgba(192, 57, 43, 0.04)" },
+                        }}
+                      >
+                        Live Preview
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        size="large"
+                        disabled={loading}
+                        startIcon={<PublishIcon />}
+                        sx={{
+                          py: 1.5,
+                          fontWeight: 800,
+                          borderRadius: 2,
+                          textTransform: "none",
+                          fontSize: "1rem",
+                          background: loading ? undefined : "linear-gradient(135deg, #ef4444, #f97316)",
+                          boxShadow: "0 4px 12px rgba(239,68,68,0.3)",
+                          "&:hover": { background: "linear-gradient(135deg, #dc2626, #ef4444)" },
+                          flex: { sm: 2 },
+                        }}
+                      >
+                        {loading ? "Saving..." : user?.role === "admin" ? "Publish Article" : "Submit for Review"}
+                      </Button>
+                    </Stack>
                   </Stack>
                 </form>
               </CardContent>
@@ -556,6 +606,18 @@ export default function CreateNews() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Live Reader Preview Studio Modal */}
+      <ArticlePreviewModal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        formData={formData}
+        seoMeta={seoMeta}
+        user={user}
+        hasPoll={hasPoll}
+        pollQuestion={pollQuestion}
+        pollOptions={pollOptions}
+      />
     </Box>
     </RoleGuard>
   );
