@@ -54,7 +54,7 @@ export default function HomeClient({ allNews, error }) {
 
       {/* 728x90 Top Leaderboard Ad */}
       <Box className="fade-in-up" sx={{ animationDelay: '0.3s', mt: 3, display: { xs: 'none', md: 'block' } }}>
-        <AdsterraBanner adKey="c2aa037e57084facffa3af8c79667de9" width={728} height={90} />
+        <AdsterraBanner placement="homeLeaderboard" />
       </Box>
 
       {/* Magazine Grid */}

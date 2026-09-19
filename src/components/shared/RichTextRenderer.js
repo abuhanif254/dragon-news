@@ -40,13 +40,20 @@ export default function RichTextRenderer({ content }) {
 
   // Inject a placeholder for the In-Article Ad after the 2nd paragraph
   let pCount = 0;
-  const withAdPlaceholder = sanitizedContent.replace(/<\/p>/gi, (match) => {
+  let hasInjected = false;
+  let withAdPlaceholder = sanitizedContent.replace(/<\/p>/gi, (match) => {
     pCount++;
     if (pCount === 2) {
+      hasInjected = true;
       return `${match}<div id="adsterra-in-article-placeholder"></div>`;
     }
     return match;
   });
+
+  // If article has only 1 paragraph, place the ad after it
+  if (!hasInjected && pCount === 1) {
+    withAdPlaceholder += '<div id="adsterra-in-article-placeholder"></div>';
+  }
 
   const parsedReactNodes = parse(withAdPlaceholder, {
     replace: (domNode) => {
@@ -54,7 +61,7 @@ export default function RichTextRenderer({ content }) {
       if (domNode.type === 'tag' && domNode.attribs && domNode.attribs.id === 'adsterra-in-article-placeholder') {
         return (
           <div className="my-8 flex justify-center w-full clear-both">
-            <AdsterraBanner adKey="7b4ab590c7e6c0ec63293079a2da40bd" width={300} height={250} />
+            <AdsterraBanner placement="articleInContent" />
           </div>
         );
       }

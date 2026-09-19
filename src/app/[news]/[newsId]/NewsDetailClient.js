@@ -364,7 +364,7 @@ export default function NewsDetailClient({ news, related, contentNode }) {
 
             {/* 728x90 Banner Before Article (Desktop Only) */}
             <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', mb: 4, mt: 2 }}>
-              <AdsterraBanner adKey="c2aa037e57084facffa3af8c79667de9" width={728} height={90} />
+              <AdsterraBanner placement="articleLeaderboard" />
             </Box>
 
             {/* Audio Narrator */}
@@ -514,7 +514,7 @@ export default function NewsDetailClient({ news, related, contentNode }) {
 
             {/* 300x250 Sidebar Ad */}
             <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-              <AdsterraBanner adKey="7b4ab590c7e6c0ec63293079a2da40bd" width={300} height={250} />
+              <AdsterraBanner placement="articleSidebar" />
             </Box>
 
             {/* Share Buttons (Mobile/Tablet only, hidden on large desktop where floating bar is) */}

@@ -1,5 +1,4 @@
 import "./globals.css";
-import Script from "next/script";
 import { ThemeContextProvider } from "@/theme/ThemeContextProvider";
 import { LayoutWrapper } from "@/components/shared/LayoutWrapper";
 import { SiteSettingsProvider } from "@/components/shared/SiteSettingsProvider";
@@ -226,29 +225,8 @@ export default async function RootLayout({ children }) {
           siteDescription={siteDescription}
           ogImage={ogImage}
         />
-        {/* Adsterra Social Bar Ads (Native Injection to bypass Next.js) */}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            var socialBar = document.createElement('script');
-            socialBar.type = 'text/javascript';
-            socialBar.src = 'https://pl30837550.effectivecpmnetwork.com/d8/f0/18/d8f0189b81e55fb43556ba6df0ee60fc.js';
-            document.head.appendChild(socialBar);
-          `
-        }} />
       </head>
       <body style={{ fontFamily: "var(--font-inter)", margin: 0 }}>
-        {/* Monetag Push Notification Ads */}
-        <Script src="https://5gvci.com/act/files/tag.min.js?z=11572353" data-cfasync="false" strategy="afterInteractive" />
-        
-        {/* Monetag In-Page Push Ads */}
-        <Script 
-          id="monetag-in-page" 
-          strategy="afterInteractive" 
-          dangerouslySetInnerHTML={{ 
-            __html: `(function(s){s.dataset.zone='11572349',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))` 
-          }} 
-        />
-
         <AppRouterCacheProvider>
           <ThemeContextProvider>
             <ToastProvider>

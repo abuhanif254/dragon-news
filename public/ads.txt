@@ -1,0 +1,9 @@
+# ads.txt - Authorized Digital Sellers
+# Domain: dragonnews / the-brain
+# 
+# Instructions:
+# Log into your Adsterra Publisher dashboard -> Go to "Websites" -> Click "Download ads.txt"
+# and paste your account's exact direct seller records below.
+
+# Example Adsterra records format:
+# google.com, pub-XXXXXXXXXXXXXXXX, RESELLER, f08c47fec0942fa0

@@ -1,6 +1,17 @@
-self.options = {
-    "domain": "5gvci.com",
-    "zoneId": 11572326
-}
-self.lary = ""
-importScripts('https://5gvci.com/act/files/service-worker.min.js?r=sw')
+// Service Worker Cleanup
+// Automatically unregisters any legacy push notification workers
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    self.registration.unregister().then(() => {
+      return self.clients.matchAll();
+    }).then((clients) => {
+      clients.forEach((client) => {
+        // Allow clients to continue browsing without legacy push worker
+      });
+    })
+  );
+});
