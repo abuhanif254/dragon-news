@@ -6,6 +6,8 @@ import NewsTicker from "@/components/ui/NewsTicker/NewsTicker";
 import FeaturedGrid from "@/components/ui/FeaturedGrid/FeaturedGrid";
 import ArticleCard from "@/components/ui/ArticleCard/ArticleCard";
 import CategorySpotlight from "@/components/ui/CategorySpotlight/CategorySpotlight";
+import EditorialSpotlight from "@/components/ui/EditorialSpotlight/EditorialSpotlight";
+import EditorialVoices from "@/components/ui/EditorialVoices/EditorialVoices";
 import {
   Grid,
   Box,
@@ -76,6 +78,16 @@ export default function HomeClient({ allNews = [], error }) {
     const fallbackCat = categories[1] || categories[0];
     return fallbackCat ? allNews.filter((n) => n.category === fallbackCat) : [];
   }, [allNews, categories]);
+
+  // Special Investigation story: deep dive article with richest content & image
+  const spotlightArticle = useMemo(() => {
+    if (allNews.length === 0) return null;
+    const withImages = allNews.filter((a) => a.thumbnail_url || a.image_url);
+    const pool = withImages.length > 0 ? withImages : allNews;
+    return pool.reduce((longest, curr) => {
+      return (curr.details || "").length > (longest.details || "").length ? curr : longest;
+    }, pool[0]);
+  }, [allNews]);
 
   // Filter pool stories based on active pill
   const filteredStories = useMemo(() => {
@@ -150,7 +162,14 @@ export default function HomeClient({ allNews = [], error }) {
         </Box>
       )}
 
-      {/* ── 5. Two Column Layout for Recent News & Sidebar ── */}
+      {/* ── 5. Special Investigation Spotlight ── */}
+      {spotlightArticle && (
+        <Box className="fade-in-up" sx={{ animationDelay: "0.58s", mt: 2 }}>
+          <EditorialSpotlight article={spotlightArticle} />
+        </Box>
+      )}
+
+      {/* ── 6. Two Column Layout for Recent News & Sidebar ── */}
       <Grid
         container
         spacing={{ xs: 2, sm: 3, md: 4 }}
@@ -360,9 +379,14 @@ export default function HomeClient({ allNews = [], error }) {
         </Grid>
       </Grid>
 
-      {/* ── 6. Showcase 2: Philosophy, Ethics & Free Expression ── */}
+      {/* ── 7. Editorial Voices & Columnists (E-E-A-T) ── */}
+      <Box className="fade-in-up" sx={{ animationDelay: "0.64s", mt: 6 }}>
+        <EditorialVoices allNews={allNews} />
+      </Box>
+
+      {/* ── 8. Showcase 2: Philosophy, Ethics & Free Expression ── */}
       {philosophyArticles.length > 0 && (
-        <Box className="fade-in-up" sx={{ animationDelay: "0.65s", mt: 7 }}>
+        <Box className="fade-in-up" sx={{ animationDelay: "0.68s", mt: 6 }}>
           <CategorySpotlight
             category={philosophyArticles[0]?.category || "Philosophy"}
             title="Philosophy, Ethics & Free Thought"
