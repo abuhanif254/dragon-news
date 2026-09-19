@@ -1,5 +1,5 @@
 import { getSiteSettings } from "@/lib/firestore";
-import { SITE_URL, SITE_NAME } from "@/lib/site";
+import { SITE_URL, SITE_NAME, SITE_LOGO } from "@/lib/site";
 import AboutClient from "./AboutClient";
 
 export async function generateMetadata() {
@@ -41,5 +41,64 @@ export async function generateMetadata() {
 }
 
 export default async function AboutPage() {
-  return <AboutClient />;
+  const settings = await getSiteSettings();
+  const siteName = settings?.siteName || SITE_NAME;
+  const canonicalUrl = `${SITE_URL}/about`;
+
+  const aboutSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "AboutPage",
+        "@id": `${canonicalUrl}#webpage`,
+        url: canonicalUrl,
+        name: `About ${siteName}`,
+        description: `Learn more about ${siteName}, our editorial policies, ownership, and independent journalistic mission.`,
+        isPartOf: { "@id": `${SITE_URL}/#website` },
+        about: { "@id": `${SITE_URL}/#organization` },
+        breadcrumb: {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+            { "@type": "ListItem", position: 2, name: "About Us", item: canonicalUrl },
+          ],
+        },
+      },
+      {
+        "@type": "NewsMediaOrganization",
+        "@id": `${SITE_URL}/#organization`,
+        name: siteName,
+        url: SITE_URL,
+        logo: {
+          "@type": "ImageObject",
+          url: SITE_LOGO,
+          width: 512,
+          height: 512,
+        },
+        publishingPrinciples: `${SITE_URL}/about`,
+        correctionsPolicy: `${SITE_URL}/about#corrections`,
+        diversityPolicy: `${SITE_URL}/about#diversity`,
+        ethicsPolicy: `${SITE_URL}/terms#ethics`,
+        masthead: `${SITE_URL}/about#team`,
+        ownershipFundingInfo: `${SITE_URL}/about#funding`,
+        contactPoint: {
+          "@type": "ContactPoint",
+          telephone: "+880 1724 010261",
+          contactType: "newsroom",
+          email: "editors@thebrain.com",
+        },
+      },
+    ],
+  };
+
+  return (
+    <>
+      <script
+        id="about-page-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutSchema) }}
+      />
+      <AboutClient />
+    </>
+  );
 }

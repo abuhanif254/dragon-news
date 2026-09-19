@@ -20,13 +20,21 @@ import ArticleIcon from "@mui/icons-material/Article";
 const getAuthorNameBySlug = cache(async (slug) => {
   const newsResponse = await getAllNews({ includeFallback: false });
   const allNews = newsResponse.data || [];
+  const decoded = decodeURIComponent(slug || "");
   
   for (const article of allNews) {
-    if (article.author?.name && slugify(article.author.name) === slug) {
-      return article.author.name;
+    if (article.author?.name) {
+      const authorName = article.author.name;
+      if (
+        slugify(authorName) === slug ||
+        slugify(authorName) === decoded ||
+        authorName.toLowerCase() === decoded.toLowerCase()
+      ) {
+        return authorName;
+      }
     }
   }
-  return decodeURIComponent(slug); // Fallback
+  return decoded; // Fallback
 });
 
 // This would ideally come from an 'authors' collection, 
@@ -45,13 +53,13 @@ export async function generateMetadata({ params }) {
   const siteName = settings?.siteName || SITE_NAME;
   const bio = profile?.bio || `Read articles and professional insights from ${name} at ${siteName}.`;
   const image = profile?.image || null;
-  const authorPageUrl = `${SITE_URL}/authors/${slug}`;
+  const authorPageUrl = `${SITE_URL}/authors/${encodeURIComponent(slug)}`;
 
   return {
     title: `${name} | Author Profile | ${siteName}`,
     description: bio,
     keywords: [name, "author", "journalist", siteName, "news"],
-    alternates: { canonical: `/authors/${slug}` },
+    alternates: { canonical: authorPageUrl },
     openGraph: {
       title: `${name} | Author Profile | ${siteName}`,
       description: bio,

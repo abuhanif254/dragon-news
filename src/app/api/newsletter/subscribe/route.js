@@ -1,34 +1,22 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
 
-// Simple in-memory sliding-window IP rate limiter
-const ipRequests = new Map();
-const RATE_LIMIT_WINDOW = 10 * 60 * 1000; // 10 minutes
-const MAX_REQUESTS_PER_WINDOW = 5;
-
-function isRateLimited(ip) {
-  const now = Date.now();
-  const timestamps = (ipRequests.get(ip) || []).filter((time) => now - time < RATE_LIMIT_WINDOW);
-
-  if (timestamps.length >= MAX_REQUESTS_PER_WINDOW) {
-    return true;
-  }
-
-  timestamps.push(now);
-  ipRequests.set(ip, timestamps);
-  return false;
-}
+// Centralized IP rate limiter: max 5 attempts per 10 minutes per IP with auto-cleanup
+const newsletterLimiter = createRateLimiter({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  name: "newsletter-subscribe",
+});
 
 export async function POST(request) {
   try {
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      request.headers.get("x-real-ip") ||
-      "unknown-ip";
+    const ip = getClientIp(request);
 
     // 1. IP Rate Limiting Check
-    if (isRateLimited(ip)) {
+    const limit = newsletterLimiter(ip);
+    if (limit.isLimited) {
       return NextResponse.json(
         { status: "error", message: "Too many subscription attempts. Please try again later." },
         { status: 429 }

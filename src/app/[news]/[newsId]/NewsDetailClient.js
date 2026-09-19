@@ -382,13 +382,16 @@ export default function NewsDetailClient({ news, related, contentNode }) {
             </Box>
 
             {/* Rich Text Body */}
-            <Box sx={{ 
-              maxWidth: "100%", 
-              overflow: "hidden", 
-              wordBreak: "break-word", 
-              fontSize: `${fontSize}rem`,
-              fontFamily: fontFamily === "serif" ? "'Playfair Display', 'Georgia', serif" : "'Inter', 'Roboto', sans-serif"
-            }}>
+            <Box
+              className="article-prose"
+              sx={{ 
+                maxWidth: "100%", 
+                overflow: "hidden", 
+                wordBreak: "break-word", 
+                fontSize: `${fontSize}rem`,
+                fontFamily: fontFamily === "serif" ? "'Playfair Display', 'Georgia', serif" : "'Inter', 'Roboto', sans-serif"
+              }}
+            >
               {contentNode}
             </Box>
 

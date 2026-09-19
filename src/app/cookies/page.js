@@ -37,9 +37,14 @@ export async function generateMetadata() {
 }
 
 export default async function CookiesPage() {
-  const pageData = await getPage("cookies");
+  const [pageData, settings] = await Promise.all([
+    getPage("cookies"),
+    getSiteSettings()
+  ]);
   
+  const siteName = settings?.siteName || "The Brain";
   const title = pageData?.title || "Cookie Policy";
+  const canonicalUrl = `${SITE_URL}/cookies`;
   
   // Default HTML content if not found in CMS
   const defaultContent = `
@@ -71,5 +76,31 @@ export default async function CookiesPage() {
   const content = pageData?.content || defaultContent;
   const lastUpdated = pageData?.updatedAt ? new Date(pageData.updatedAt).toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }) : "Recently Updated";
 
-  return <LegalPageLayout title={title} content={content} lastUpdated={lastUpdated} />;
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": `${canonicalUrl}#webpage`,
+    url: canonicalUrl,
+    name: `${title} | ${siteName}`,
+    description: `Cookie Policy and tracking transparency disclosures for ${siteName}.`,
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Cookie Policy", item: canonicalUrl },
+      ],
+    },
+  };
+
+  return (
+    <>
+      <script
+        id="cookies-page-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+      <LegalPageLayout title={title} content={content} lastUpdated={lastUpdated} />
+    </>
+  );
 }

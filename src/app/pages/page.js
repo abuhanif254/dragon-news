@@ -10,15 +10,55 @@ import {
 import Link from "next/link";
 import { NAV_ITEMS } from "@/utils/navItems";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const metadata = {
-  title: "Site Directory | The Brain",
-  description: "Directory of all active pages on The Brain portal.",
+  title: `Site Directory | ${SITE_NAME}`,
+  description: "Directory of all active sections, channels, and portals on The Brain platform.",
+  alternates: {
+    canonical: `${SITE_URL}/pages`,
+  },
+  openGraph: {
+    title: `Site Directory | ${SITE_NAME}`,
+    description: "Directory of all active sections, channels, and portals on The Brain platform.",
+    url: `${SITE_URL}/pages`,
+    siteName: SITE_NAME,
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: `Site Directory | ${SITE_NAME}`,
+    description: "Directory of all active sections, channels, and portals on The Brain platform.",
+  },
 };
 
 const PagesDirectory = () => {
+  const directoryCanonical = `${SITE_URL}/pages`;
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${directoryCanonical}#webpage`,
+    url: directoryCanonical,
+    name: `Site Directory | ${SITE_NAME}`,
+    description: "Directory of all active sections, channels, and portals on The Brain platform.",
+    isPartOf: { "@id": `${SITE_URL}/#website` },
+    breadcrumb: {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+        { "@type": "ListItem", position: 2, name: "Site Directory", item: directoryCanonical },
+      ],
+    },
+  };
+
   return (
-    <Container className="my-10 min-h-[60vh] py-10">
+    <>
+      <script
+        id="pages-directory-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+      <Container className="my-10 min-h-[60vh] py-10">
       <Typography
         variant="h3"
         fontWeight={700}
@@ -70,6 +110,7 @@ const PagesDirectory = () => {
         ))}
       </Grid>
     </Container>
+    </>
   );
 };
 

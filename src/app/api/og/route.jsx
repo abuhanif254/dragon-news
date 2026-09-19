@@ -10,6 +10,7 @@ export async function GET(request) {
     const category = (searchParams.get("category") || "News & Analysis").toUpperCase();
     const author = searchParams.get("author") || "The Brain Editorial Team";
     const readTime = searchParams.get("readTime") || "4 min read";
+    const host = request.headers.get("host") || new URL(request.url).host || "thebrain.media";
 
     // Truncate title if extremely long
     const displayTitle = title.length > 110 ? `${title.slice(0, 107)}...` : title;
@@ -169,7 +170,7 @@ export async function GET(request) {
                   letterSpacing: "0.04em",
                 }}
               >
-                thebrain.media
+                {host}
               </div>
             </div>
           </div>

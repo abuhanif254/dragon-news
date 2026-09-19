@@ -262,6 +262,8 @@ export default async function NewsDetailPage({ params }) {
   // Estimate word count from stripped HTML for Google's wordCount property
   const plainText = (news.details || "").replace(/<[^>]+>/g, " ").trim();
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
+  const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 180));
+  const timeRequiredIso = `PT${readingTimeMinutes}M`;
 
   const seoMeta = news.seoMeta || {};
   const seoTags = Array.isArray(seoMeta.tags) && seoMeta.tags.length > 0 ? seoMeta.tags : [];
@@ -285,6 +287,35 @@ export default async function NewsDetailPage({ params }) {
 
   const isBangla = isBengali(news.title + (news.details || ""));
 
+  // Google Discover requires 16:9, 4:3, and 1:1 image representations
+  const imageCaption = seoMeta.altText?.banner || seoMeta.altText?.thumbnail || news.title;
+  const discoverImages = [
+    {
+      "@type": "ImageObject",
+      url: imageUrl,
+      contentUrl: imageUrl,
+      width: 1200,
+      height: 675, // 16:9 aspect ratio
+      caption: imageCaption,
+    },
+    {
+      "@type": "ImageObject",
+      url: imageUrl,
+      contentUrl: imageUrl,
+      width: 1200,
+      height: 900, // 4:3 aspect ratio
+      caption: imageCaption,
+    },
+    {
+      "@type": "ImageObject",
+      url: imageUrl,
+      contentUrl: imageUrl,
+      width: 1200,
+      height: 1200, // 1:1 aspect ratio
+      caption: imageCaption,
+    },
+  ];
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -296,6 +327,7 @@ export default async function NewsDetailPage({ params }) {
     articleSection: news.category,
     articleBody: plainText.slice(0, 1000), // Expanded for richer structured data
     wordCount,
+    timeRequired: timeRequiredIso,
     inLanguage: isBangla ? "bn" : "en",
     keywords: allKeywords,
     isAccessibleForFree: "True",
@@ -308,26 +340,27 @@ export default async function NewsDetailPage({ params }) {
     datePublished: publishedIso,
     dateModified: modifiedIso,
 
-    // ── Images ──
-    image: {
-      "@type": "ImageObject",
-      url: imageUrl,
-      contentUrl: imageUrl,
-      width: 1200,
-      height: 630,
-      caption: seoMeta.altText?.banner || seoMeta.altText?.thumbnail || news.title,
-    },
+    // ── Images (Google Discover compliant: 16:9, 4:3, 1:1) ──
+    image: discoverImages,
 
     // ── Author (E-E-A-T) ──
     author: [
       {
         "@type": "Person",
         name: news.author?.name || "The Brain Editorial Team",
+        jobTitle: "Journalist",
         url: authorUrl(news.author?.name),
+        sameAs: [authorUrl(news.author?.name)],
+        worksFor: {
+          "@type": "NewsMediaOrganization",
+          "@id": `${SITE_URL}/#organization`,
+          name: SITE_NAME,
+          url: SITE_URL,
+        },
       },
     ],
 
-    // ── Publisher ──
+    // ── Publisher (Full E-E-A-T Transparency Specification) ──
     publisher: {
       "@type": "NewsMediaOrganization",
       "@id": `${SITE_URL}/#organization`,
@@ -338,6 +371,19 @@ export default async function NewsDetailPage({ params }) {
         url: SITE_LOGO,
         width: 512,
         height: 512,
+      },
+      publishingPrinciples: `${SITE_URL}/about`,
+      correctionsPolicy: `${SITE_URL}/about#corrections`,
+      diversityPolicy: `${SITE_URL}/about#diversity`,
+      ethicsPolicy: `${SITE_URL}/terms#ethics`,
+      masthead: `${SITE_URL}/about#team`,
+      ownershipFundingInfo: `${SITE_URL}/about#funding`,
+      contactPoint: {
+        "@type": "ContactPoint",
+        telephone: "+880 1724 010261",
+        contactType: "newsroom",
+        email: "editors@thebrain.com",
+        availableLanguage: ["en", "bn"],
       },
     },
 

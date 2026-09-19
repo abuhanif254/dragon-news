@@ -574,9 +574,20 @@ export const toggleBookmark = async (userId, articleId) => {
 
 // COMMENTS MANAGEMENT
 export const addComment = async (articleId, user, content, parentId = null) => {
-  if (!db || !articleId || !user || !content.trim()) {
+  if (!db || !articleId || !user || !content) {
     throw new Error("Missing required parameters for adding a comment");
   }
+
+  // Sanitize content: strip HTML/script tags and limit length to 2,000 characters
+  const cleanContent = String(content)
+    .replace(/<[^>]*>?/gm, "")
+    .trim()
+    .slice(0, 2000);
+
+  if (!cleanContent) {
+    throw new Error("Comment content cannot be empty.");
+  }
+
   try {
     const commentsCollection = collection(db, "comments");
     const docRef = await addDoc(commentsCollection, {
@@ -585,7 +596,7 @@ export const addComment = async (articleId, user, content, parentId = null) => {
       userId: user.uid,
       authorName: user.displayName || user.name || "Anonymous Reader",
       photo: user.photoURL || user.photo || "",
-      content: content.trim(),
+      content: cleanContent,
       flaggedCount: 0,
       flagCount: 0,
       timestamp: serverTimestamp(),
@@ -598,7 +609,7 @@ export const addComment = async (articleId, user, content, parentId = null) => {
       userId: user.uid,
       authorName: user.displayName || user.name || "Anonymous Reader",
       photo: user.photoURL || user.photo || "",
-      content: content.trim(),
+      content: cleanContent,
       flaggedCount: 0,
       flagCount: 0,
       timestamp: new Date().toISOString(),

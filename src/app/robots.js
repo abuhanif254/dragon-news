@@ -26,6 +26,7 @@ export default function robots() {
           "/login",
           "/register",
           "/bookmarks",
+          "/offline",
           "/_next/",
           "/search?*", // Allow /search page but not query spam
         ],

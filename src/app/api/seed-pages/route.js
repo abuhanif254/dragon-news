@@ -1,8 +1,25 @@
 import { savePage } from "@/lib/firestore";
 import { NextResponse } from "next/server";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+
+// Rate limit: max 5 seed attempts per 15 minutes per IP (anti-brute-force)
+const seedPagesLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  name: "seed-pages",
+});
 
 export async function POST(req) {
   try {
+    const ip = getClientIp(req);
+    const limit = seedPagesLimiter(ip);
+    if (limit.isLimited) {
+      return NextResponse.json(
+        { success: false, message: "Too many attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const authHeader = req.headers.get("authorization");
     const secretKey = process.env.ADMIN_SECRET_KEY || process.env.JWT_SECRET;
 

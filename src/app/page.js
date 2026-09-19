@@ -22,7 +22,7 @@ export async function generateMetadata() {
     title: `${siteName} | Latest News & Analysis`,
     description: siteDescription,
     keywords: SITE_KEYWORDS,
-    alternates: { canonical: "/" },
+    alternates: { canonical: SITE_URL },
     openGraph: {
       title: `${siteName} | Latest News & Analysis`,
       description: siteDescription,
