@@ -18,7 +18,7 @@ import VerifiedIcon from "@mui/icons-material/Verified";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import { articlePath } from "@/lib/site";
-import { createExcerpt } from "@/lib/content-utils";
+import { createExcerpt, stripHtml } from "@/lib/content-utils";
 
 const readingTime = (text = "") => {
   const words = text.trim().split(/\s+/).length;
@@ -31,10 +31,13 @@ export default function EditorialSpotlight({ article }) {
   const rTime = readingTime(article.details || "");
   const targetUrl = articlePath(article);
 
-  // Extract up to 2 key sentences or structured takeaways from details
-  const cleanDetails = (article.details || "").replace(/<[^>]+>/g, " ").trim();
-  const sentences = cleanDetails.split(/[.!?]+/).map((s) => s.trim()).filter((s) => s.length > 25);
-  const takeaways = sentences.slice(1, 3);
+  // Extract up to 2 key sentences or structured takeaways from details (HTML decoded)
+  const cleanDetails = stripHtml(article.details || "");
+  const sentences = cleanDetails
+    .split(/[.!?]+/)
+    .map((s) => s.replace(/\s+/g, " ").trim())
+    .filter((s) => s.length > 25);
+  const takeaways = sentences.length > 2 ? sentences.slice(1, 3) : sentences.slice(0, 2);
 
   return (
     <Box
@@ -160,22 +163,29 @@ export default function EditorialSpotlight({ article }) {
             {/* Structured Key Takeaways */}
             {takeaways.length > 0 && (
               <Stack spacing={1} sx={{ pt: 0.5 }}>
-                {takeaways.map((takeaway, idx) => (
-                  <Stack key={idx} direction="row" alignItems="flex-start" gap={1.2}>
-                    <CheckCircleOutlineIcon sx={{ color: "#e74c3c", fontSize: 18, mt: 0.3, flexShrink: 0 }} />
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "rgba(255, 255, 255, 0.8)",
-                        lineHeight: 1.5,
-                        fontSize: "0.82rem",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {takeaway}.
-                    </Typography>
-                  </Stack>
-                ))}
+                {takeaways.map((takeaway, idx) => {
+                  const cleanTakeaway = takeaway.replace(/[.!?]+$/, "") + ".";
+                  return (
+                    <Stack key={idx} direction="row" alignItems="flex-start" gap={1.2}>
+                      <CheckCircleOutlineIcon sx={{ color: "#e74c3c", fontSize: 18, mt: 0.3, flexShrink: 0 }} />
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "rgba(255, 255, 255, 0.8)",
+                          lineHeight: 1.5,
+                          fontSize: "0.82rem",
+                          fontWeight: 500,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {cleanTakeaway}
+                      </Typography>
+                    </Stack>
+                  );
+                })}
               </Stack>
             )}
 

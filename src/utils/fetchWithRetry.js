@@ -1,7 +1,14 @@
-export const fetchWithRetry = async (url, options = {}, retries = 3, delayMs = 1000) => {
+export const fetchWithRetry = async (url, options = {}, retries = 2, delayMs = 500) => {
   for (let i = 0; i < retries; i++) {
+    const controller = new AbortController();
+    const timeoutMs = options.timeout || 6000;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(url, {
+        ...options,
+        signal: options.signal || controller.signal,
+      });
+      clearTimeout(timeoutId);
       if (!response.ok) {
         // If it's a 4xx error (except 408 or 429), retrying won't help much
         if (response.status >= 400 && response.status < 500 && response.status !== 429 && response.status !== 408) {
@@ -11,6 +18,7 @@ export const fetchWithRetry = async (url, options = {}, retries = 3, delayMs = 1
       }
       return response;
     } catch (error) {
+      clearTimeout(timeoutId);
       if (i === retries - 1) {
         throw error;
       }

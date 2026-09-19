@@ -34,7 +34,7 @@ import { subscribeToAuth } from "@/lib/auth-service";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import AdsterraBanner from "@/components/shared/AdsterraBanner";
-import { isBengali } from "@/lib/content-utils";
+import { isBengali, stripHtml } from "@/lib/content-utils";
 
 const toBengaliNumber = (num) => {
   const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
@@ -42,7 +42,7 @@ const toBengaliNumber = (num) => {
 };
 
 const getReadingTimeText = (text = "", isBangla = false) => {
-  const plain = text.replace(/<[^>]+>/g, " ").trim();
+  const plain = stripHtml(text);
   const words = plain ? plain.split(/\s+/).filter(Boolean).length : 0;
   const minutes = Math.max(1, Math.ceil(words / 180));
   return isBangla ? `${toBengaliNumber(minutes)} মিনিট পড়ার সময়` : `${minutes} min read`;

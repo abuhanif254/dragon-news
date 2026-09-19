@@ -108,11 +108,12 @@ export function buildNewsArticleSchema({
 }) {
   const { absoluteImage, articleUrl, authorUrl, createExcerpt } =
     require("@/lib/site");
-  const { isBengali } = require("@/lib/content-utils");
+  const { isBengali, stripHtml } = require("@/lib/content-utils");
 
   const isBangla = isBengali(article.title + (article.details || ""));
   const inLanguage = article.language || (isBangla ? "bn" : "en");
-  const wordCount = (article.details || "").replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+  const plainDetails = stripHtml(article.details || "");
+  const wordCount = plainDetails.split(/\s+/).filter(Boolean).length;
   const keywords = [
     article.category,
     ...(article.seoMeta?.tags || []),
@@ -130,7 +131,7 @@ export function buildNewsArticleSchema({
     headline: article.title,
     description: createExcerpt?.(article.details, 160) || "",
     articleSection: article.category,
-    articleBody: (article.details || "").replace(/<[^>]+>/g, " ").slice(0, 1000),
+    articleBody: plainDetails.slice(0, 1000),
     wordCount,
     inLanguage,
     keywords: keywords || article.category,

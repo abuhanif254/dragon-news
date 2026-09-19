@@ -10,8 +10,18 @@ export function decodeHtmlEntities(str = "") {
     .replace(/&rdquo;/gi, '"')
     .replace(/&lsquo;/gi, "'")
     .replace(/&rsquo;/gi, "'")
-    .replace(/&#39;/gi, "'")
-    .replace(/&#34;/gi, '"');
+    .replace(/&mdash;/gi, "—")
+    .replace(/&ndash;/gi, "–")
+    .replace(/&hellip;/gi, "…")
+    .replace(/&#(\d+);/g, (_, code) => {
+      const num = Number(code);
+      return num === 160 ? " " : String.fromCharCode(num);
+    })
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
+      const num = parseInt(hex, 16);
+      return num === 160 ? " " : String.fromCharCode(num);
+    })
+    .replace(/\u00A0/g, " ");
 }
 
 export function stripHtml(value = "") {

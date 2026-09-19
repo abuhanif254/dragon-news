@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 import { useMemo, useRef, useState, useCallback, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { uploadImageToStorage } from "@/lib/storage-service";
+import { stripHtml } from "@/lib/content-utils";
 import "react-quill-new/dist/quill.snow.css";
 import {
   Box, CircularProgress, Typography, Stack, Chip, IconButton, Tooltip, LinearProgress,
@@ -34,23 +35,11 @@ const FORMATS = [
 
 // Compute editor statistics from HTML content
 function getStats(html = "") {
-  const plain = html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/\s+/g, " ")
-    .trim();
-
+  const plain = stripHtml(html);
   const words = plain ? plain.split(/\s+/).filter(Boolean) : [];
   const sentences = plain ? plain.split(/[.!?]+/).filter((s) => s.trim().length > 0) : [];
   const paragraphs = (html.match(/<p[^>]*>[\s\S]*?<\/p>/gi) || []).filter((p) =>
-    p.replace(/<[^>]+>/g, "").replace(/&nbsp;/gi, "").trim().length > 0
+    stripHtml(p).length > 0
   );
   const readingTime = Math.max(1, Math.ceil(words.length / 200));
 

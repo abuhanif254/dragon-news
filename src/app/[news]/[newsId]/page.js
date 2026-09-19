@@ -15,20 +15,17 @@ import {
   SITE_LOGO,
   slugify,
 } from "@/lib/site";
-import { createExcerpt, toIsoDate, generateSlug, isBengali } from "@/lib/content-utils";
+import { createExcerpt, toIsoDate, generateSlug, isBengali, stripHtml } from "@/lib/content-utils";
 
 export async function generateStaticParams() {
-  // Pre-render the most recent 30 articles at build time (both slug and id for instant response)
+  // Pre-render the most recent 10 articles by canonical slug for instant response
   const response = await getAllNews({ includeFallback: false });
-  const articles = response.status ? response.data.slice(0, 30) : [];
+  const articles = response.status ? response.data.slice(0, 10) : [];
   const params = [];
   for (const a of articles) {
     const slug = a.slug || a.seoMeta?.slug || (a.title ? slugify(a.title) : "");
     if (slug) {
       params.push({ news: "news", newsId: slug });
-    }
-    if (a.id) {
-      params.push({ news: "news", newsId: a.id });
     }
   }
   return params;
@@ -260,7 +257,7 @@ export default async function NewsDetailPage({ params }) {
   const articleFullUrl = articleUrl(news);
 
   // Estimate word count from stripped HTML for Google's wordCount property
-  const plainText = (news.details || "").replace(/<[^>]+>/g, " ").trim();
+  const plainText = stripHtml(news.details || "");
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
   const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 180));
   const timeRequiredIso = `PT${readingTimeMinutes}M`;
