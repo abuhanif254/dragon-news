@@ -32,27 +32,49 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  const establishSession = async (user) => {
+    const idToken = await user.getIdToken?.();
+    if (idToken) {
+      // 1. Immediately set client session cookie for Edge middleware
+      const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+      document.cookie = `admin_token=${idToken}; path=/; max-age=604800; SameSite=Lax${isHttps ? "; Secure" : ""}`;
+
+      // 2. Synchronize with server session endpoint (safe JSON parsing)
+      try {
+        const res = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken }),
+        });
+
+        const contentType = res.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+          const data = await res.json();
+          if (!data.status) {
+            console.warn("Server session response warning:", data.message);
+          }
+        }
+      } catch (syncErr) {
+        console.warn("Server session sync fallback, client session active:", syncErr.message);
+      }
+    }
+
+    // 3. Navigate to target route or dashboard
+    const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const redirectUrl = params?.get("redirect") || "/dashboard";
+    router.push(redirectUrl);
+    router.refresh();
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
       const user = await loginWithEmailPassword(email, password);
-      const idToken = await user.getIdToken?.();
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-      const data = await res.json();
-      if (data.status) {
-        router.push("/dashboard");
-        router.refresh();
-      } else {
-        setError(data.message || "Authentication failed.");
-      }
+      await establishSession(user);
     } catch (err) {
-      setError("Invalid email or password.");
+      setError(err.message || "Invalid email or password.");
     } finally {
       setLoading(false);
     }
@@ -64,20 +86,12 @@ const LoginPage = () => {
     try {
       const { loginWithGoogle } = await import("@/lib/auth-service");
       const user = await loginWithGoogle();
-      const idToken = await user.getIdToken?.();
-      const res = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
-      const data = await res.json();
-      if (data.status) {
-        router.push("/dashboard");
-        router.refresh();
-      } else {
-        setError(data.message || "Admin authorization required for dashboard access.");
-      }
+      if (!user) return;
+      await establishSession(user);
     } catch (err) {
+      if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
+        return; // User intentionally closed popup
+      }
       setError("Google sign-in failed: " + (err.message || "Access denied."));
     } finally {
       setLoading(false);

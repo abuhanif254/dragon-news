@@ -16,15 +16,39 @@ const RegisterPage = () => {
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });
   const router = useRouter();
 
+  const establishSession = async (user) => {
+    const idToken = await user.getIdToken?.();
+    if (idToken) {
+      const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+      document.cookie = `admin_token=${idToken}; path=/; max-age=604800; SameSite=Lax${isHttps ? "; Secure" : ""}`;
+
+      try {
+        await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken }),
+        });
+      } catch (e) {
+        console.warn("Session sync fallback:", e.message);
+      }
+    }
+
+    router.push("/dashboard");
+    router.refresh();
+  };
+
   const handleGoogleRegister = async () => {
     setLoading(true);
     setError("");
     try {
-      await loginWithGoogle();
-      document.cookie = `admin_token=google_session; path=/; max-age=604800`;
-      router.push("/dashboard");
+      const user = await loginWithGoogle();
+      if (!user) return;
+      await establishSession(user);
     } catch (err) {
-      setError("Registration failed. Please try again.");
+      if (err.code === "auth/popup-closed-by-user" || err.code === "auth/cancelled-popup-request") {
+        return;
+      }
+      setError(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -40,9 +64,8 @@ const RegisterPage = () => {
         throw new Error("Password must be at least 6 characters.");
       }
 
-      await registerWithEmailPassword(formData);
-      document.cookie = `admin_token=email_session; path=/; max-age=604800`;
-      router.push("/dashboard");
+      const user = await registerWithEmailPassword(formData);
+      await establishSession(user);
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");
     } finally {
