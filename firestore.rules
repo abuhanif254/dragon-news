@@ -98,7 +98,19 @@ service cloud.firestore {
 
     match /authors/{authorId} {
       allow read: if true;
-      allow write: if isAdmin() || isWriter();
+      allow write: if isAdmin() || (
+        isWriter() && (
+          authorId == request.auth.uid ||
+          (resource != null && resource.data.uid == request.auth.uid) ||
+          request.resource.data.uid == request.auth.uid
+        )
+      );
+    }
+
+    // Security Audit Logs - strictly server-generated or admin read-only
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     match /categories/{categoryId} {

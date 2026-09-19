@@ -15,6 +15,7 @@ import Link from "next/link";
 import EditIcon from "@mui/icons-material/Edit";
 import ArticleIcon from "@mui/icons-material/Article";
 import { getAllPages } from "@/lib/firestore";
+import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 const PREDEFINED_PAGES = [
   { slug: "about", title: "About Us", description: "The story behind The Brain." },
@@ -133,8 +134,9 @@ Support: support@thebrain.com</p>`
   }
 
   return (
-    <Box>
-      <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <AdminRouteGuard fallbackTitle="Static Pages CMS">
+      <Box>
+        <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Box>
           <Typography variant="h4" fontWeight="bold" sx={{ color: "#1e293b", mb: 0.5 }}>
             Static Pages CMS
@@ -203,5 +205,6 @@ Support: support@thebrain.com</p>`
         })}
       </Grid>
     </Box>
+    </AdminRouteGuard>
   );
 }

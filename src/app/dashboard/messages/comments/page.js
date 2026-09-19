@@ -36,6 +36,7 @@ import {
   clearCommentFlags,
   deleteComment,
 } from "@/lib/firestore";
+import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 export default function CommentModerationPage() {
   const router = useRouter();
@@ -111,9 +112,10 @@ export default function CommentModerationPage() {
   };
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
+    <AdminRouteGuard fallbackTitle="Comment Moderation">
+      <Box>
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
         <Typography variant="h4" fontWeight={900} sx={{ color: "#0f172a", fontFamily: "'Playfair Display', serif" }}>
           Inboxes & Moderation
         </Typography>
@@ -281,5 +283,6 @@ export default function CommentModerationPage() {
         </TableContainer>
       )}
     </Box>
+    </AdminRouteGuard>
   );
 }

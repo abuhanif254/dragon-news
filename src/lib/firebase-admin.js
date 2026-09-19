@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 if (!getApps().length) {
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -19,3 +20,6 @@ if (!getApps().length) {
 }
 
 export const adminAuth = getAuth();
+export const adminDb = getFirestore();
+export const adminFieldValue = FieldValue;
+

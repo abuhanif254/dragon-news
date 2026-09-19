@@ -11,6 +11,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import EmailIcon from "@mui/icons-material/Email";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import DownloadIcon from "@mui/icons-material/Download";
+import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 export default function SubscribersPage() {
   const confirm = useConfirm();
@@ -67,9 +68,10 @@ export default function SubscribersPage() {
   }
 
   return (
-    <Box>
-      {/* Header */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+    <AdminRouteGuard fallbackTitle="Newsletter Subscribers">
+      <Box>
+        {/* Header */}
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight={900} sx={{ color: "#0f172a", mb: 0.5 }}>
             Newsletter Subscribers
@@ -158,5 +160,6 @@ export default function SubscribersPage() {
         </Table>
       </TableContainer>
     </Box>
+    </AdminRouteGuard>
   );
 }

@@ -14,6 +14,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ChatIcon from "@mui/icons-material/Chat";
 import { useRouter } from "next/navigation";
+import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -76,9 +77,10 @@ export default function MessagesPage() {
   }
 
   return (
-    <Box>
-      {/* Header */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+    <AdminRouteGuard fallbackTitle="Inboxes & Moderation">
+      <Box>
+        {/* Header */}
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight={900} sx={{ color: "#0f172a", mb: 0.5 }}>
             Inboxes & Moderation
@@ -244,5 +246,6 @@ export default function MessagesPage() {
         )}
       </Dialog>
     </Box>
+    </AdminRouteGuard>
   );
 }

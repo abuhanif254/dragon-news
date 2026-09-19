@@ -29,6 +29,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import DownloadIcon from "@mui/icons-material/Download";
 import { getAllUsers, reviewWriterApplication, updateUserRole } from "@/lib/auth-service";
 import { ADMIN_EMAIL, isAdminEmail } from "@/lib/site";
+import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 const ROLE_COLORS = {
   admin: "#c0392b",
@@ -136,8 +137,9 @@ export default function UserManagementPage() {
   };
 
   return (
-    <Box>
-      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} spacing={2} sx={{ mb: 4 }}>
+    <AdminRouteGuard fallbackTitle="User & Role Management">
+      <Box>
+        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} spacing={2} sx={{ mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight={900} sx={{ color: "#0f172a", fontFamily: "'Playfair Display', serif" }}>
             User Management
@@ -306,5 +308,6 @@ export default function UserManagementPage() {
         </TableContainer>
       </Card>
     </Box>
+    </AdminRouteGuard>
   );
 }

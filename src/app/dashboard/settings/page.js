@@ -24,6 +24,7 @@ import LanguageIcon from "@mui/icons-material/Language";
 import ShareIcon from "@mui/icons-material/Share";
 import { getSiteSettings, updateSiteSettings } from "@/lib/firestore";
 import { SITE_NAME, SITE_DESCRIPTION, ADMIN_EMAIL } from "@/lib/site";
+import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
@@ -108,8 +109,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+    <AdminRouteGuard fallbackTitle="Global Site Settings">
+      <Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight="bold" sx={{ color: "#1e293b", mb: 0.5 }}>
             Settings
@@ -374,5 +376,6 @@ export default function SettingsPage() {
         </Grid2>
       </Grid2>
     </Box>
+    </AdminRouteGuard>
   );
 }

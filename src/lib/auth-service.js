@@ -189,15 +189,38 @@ export const updateUserRole = async (user, newRole) => {
     throw new Error(`Only ${ADMIN_EMAIL} can hold the admin role.`);
   }
 
-  const nextRole = isAdminEmail(user.email) ? "admin" : newRole;
-  await updateDoc(doc(db, "users", user.id || user.uid), {
-    role: nextRole,
-    writerApplicationStatus:
-      nextRole === "writer" ? "approved" : nextRole === "reader" ? "none" : user.writerApplicationStatus || "none",
-    updatedAt: serverTimestamp(),
-  });
+  // Authoritative server-side update with audit log
+  try {
+    const token = await auth.currentUser?.getIdToken();
+    const res = await fetch("/api/admin/users/role", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        targetUserId: user.id || user.uid,
+        targetEmail: user.email,
+        nextRole: newRole,
+      }),
+    });
 
-  return nextRole;
+    const data = await res.json();
+    if (res.ok && data.success) {
+      return data.role;
+    }
+    throw new Error(data.message || "Server rejected role change request.");
+  } catch (apiErr) {
+    console.warn("Server role API error, attempting direct Firestore write:", apiErr.message);
+    const nextRole = isAdminEmail(user.email) ? "admin" : newRole;
+    await updateDoc(doc(db, "users", user.id || user.uid), {
+      role: nextRole,
+      writerApplicationStatus:
+        nextRole === "writer" ? "approved" : nextRole === "reader" ? "none" : user.writerApplicationStatus || "none",
+      updatedAt: serverTimestamp(),
+    });
+    return nextRole;
+  }
 };
 
 export const reviewWriterApplication = async (user, decision) => {
@@ -205,25 +228,51 @@ export const reviewWriterApplication = async (user, decision) => {
   const nextRole = approved ? "writer" : "reader";
   const userId = user.id || user.uid;
 
-  await updateDoc(doc(db, "users", userId), {
-    role: isAdminEmail(user.email) ? "admin" : nextRole,
-    writerApplicationStatus: decision,
-    updatedAt: serverTimestamp(),
-  });
+  // Authoritative server-side update with audit log
+  try {
+    const token = await auth.currentUser?.getIdToken();
+    const res = await fetch("/api/admin/users/role", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        targetUserId: userId,
+        targetEmail: user.email,
+        nextRole,
+        decision,
+      }),
+    });
 
-  await setDoc(
-    doc(db, "writerRequests", userId),
-    {
-      uid: userId,
-      name: user.name || "",
-      email: user.email || "",
-      photo: user.photo || "",
-      status: decision,
-      reviewedAt: serverTimestamp(),
+    const data = await res.json();
+    if (res.ok && data.success) {
+      return { role: data.role, writerApplicationStatus: data.writerApplicationStatus };
+    }
+    throw new Error(data.message || "Server rejected writer review request.");
+  } catch (apiErr) {
+    console.warn("Server writer review API error, attempting direct Firestore write:", apiErr.message);
+    await updateDoc(doc(db, "users", userId), {
+      role: isAdminEmail(user.email) ? "admin" : nextRole,
+      writerApplicationStatus: decision,
       updatedAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
+    });
 
-  return { role: nextRole, writerApplicationStatus: decision };
+    await setDoc(
+      doc(db, "writerRequests", userId),
+      {
+        uid: userId,
+        name: user.name || "",
+        email: user.email || "",
+        photo: user.photo || "",
+        status: decision,
+        reviewedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return { role: nextRole, writerApplicationStatus: decision };
+  }
 };
+

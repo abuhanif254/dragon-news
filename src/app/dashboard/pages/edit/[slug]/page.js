@@ -9,6 +9,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import { getPage, savePage } from "@/lib/firestore";
 import CustomEditor from "@/components/ui/CustomEditor/CustomEditor";
 import DOMPurify from "dompurify";
+import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 export default function EditPage({ params }) {
   const router = useRouter();
@@ -95,8 +96,9 @@ export default function EditPage({ params }) {
   }
 
   return (
-    <Box sx={{ maxWidth: 1000, mx: "auto" }}>
-      <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
+    <AdminRouteGuard fallbackTitle="Static Page Editor">
+      <Box sx={{ maxWidth: 1000, mx: "auto" }}>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 2 }}>
         <Button 
           startIcon={<ArrowBackIcon />} 
           onClick={() => router.push("/dashboard/pages")}
@@ -162,5 +164,6 @@ export default function EditPage({ params }) {
         </Box>
       </Paper>
     </Box>
+    </AdminRouteGuard>
   );
 }

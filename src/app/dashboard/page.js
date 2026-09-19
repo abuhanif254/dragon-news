@@ -13,6 +13,7 @@ import HowToRegIcon from "@mui/icons-material/HowToReg";
 import { getAllNews } from "@/utils/getAllNews";
 import Link from "next/link";
 import { requestWriterAccess, subscribeToAuth } from "@/lib/auth-service";
+import { ADMIN_EMAIL } from "@/lib/site";
 
 export default function DashboardOverview() {
   const [allNews, setAllNews] = useState([]);
@@ -22,6 +23,16 @@ export default function DashboardOverview() {
   const [applyStatus, setApplyStatus] = useState({ type: "", message: "" });
   const [applying, setApplying] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [unauthorizedAlert, setUnauthorizedAlert] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("unauthorized") === "1") {
+        setUnauthorizedAlert(true);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuth((u) => setUser(u));
@@ -149,6 +160,16 @@ export default function DashboardOverview() {
 
   return (
     <Box>
+      {unauthorizedAlert && (
+        <Alert
+          severity="error"
+          onClose={() => setUnauthorizedAlert(false)}
+          sx={{ mb: 3, borderRadius: 2.5, fontWeight: 600, border: "1px solid #fca5a5" }}
+        >
+          Security Notice: Access to that administrative section is restricted to the platform administrator ({ADMIN_EMAIL}). You have been redirected safely to the overview.
+        </Alert>
+      )}
+
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight={800} sx={{ color: "#0f172a", lineHeight: 1.2 }}>

@@ -36,6 +36,7 @@ import {
   deleteCategoryFirestore,
   getAllNews 
 } from "@/lib/firestore";
+import AdminRouteGuard from "@/components/auth/AdminRouteGuard";
 
 export default function CategoriesPage() {
   const [categoryList, setCategoryList] = useState([]);
@@ -139,9 +140,10 @@ export default function CategoriesPage() {
   }
 
   return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+    <AdminRouteGuard fallbackTitle="Categories Management">
+      <Box>
+        {/* Header */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight="bold" sx={{ color: "#1e293b", mb: 0.5 }}>
             Categories Management
@@ -389,5 +391,6 @@ export default function CategoriesPage() {
         </DialogActions>
       </Dialog>
     </Box>
+    </AdminRouteGuard>
   );
 }

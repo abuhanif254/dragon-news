@@ -63,9 +63,15 @@ export default function DashboardLayout({ children }) {
   const drawerWidth = collapsed ? DRAWER_MINI : DRAWER_FULL;
 
   const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" });
+    } catch (e) {
+      console.error("Failed to call logout API:", e);
+    }
     await firebaseLogout();
     document.cookie = "admin_token=; path=/; max-age=0";
     router.push("/login");
+    router.refresh();
   };
 
   const isActive = (path) => {
