@@ -3,7 +3,7 @@ import { getAllNews } from "@/utils/getAllNews";
 import { incrementViews } from "@/lib/firestore";
 import NewsDetailClient from "./NewsDetailClient";
 import RichTextRenderer from "@/components/shared/RichTextRenderer";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import {
   absoluteImage,
   articlePath,
@@ -13,14 +13,25 @@ import {
   SITE_URL,
   SITE_TWITTER_HANDLE,
   SITE_LOGO,
+  slugify,
 } from "@/lib/site";
-import { createExcerpt, toIsoDate } from "@/lib/content-utils";
+import { createExcerpt, toIsoDate, generateSlug } from "@/lib/content-utils";
 
 export async function generateStaticParams() {
-  // Pre-render the most recent 20 articles at build time
+  // Pre-render the most recent 30 articles at build time (both slug and id for instant response)
   const response = await getAllNews({ includeFallback: false });
-  const articles = response.status ? response.data.slice(0, 20) : [];
-  return articles.map((a) => ({ news: "news", newsId: a.id || a._id }));
+  const articles = response.status ? response.data.slice(0, 30) : [];
+  const params = [];
+  for (const a of articles) {
+    const slug = a.slug || a.seoMeta?.slug || (a.title ? slugify(a.title) : "");
+    if (slug) {
+      params.push({ news: "news", newsId: slug });
+    }
+    if (a.id) {
+      params.push({ news: "news", newsId: a.id });
+    }
+  }
+  return params;
 }
 
 export async function generateMetadata({ params }) {
@@ -70,10 +81,7 @@ export async function generateMetadata({ params }) {
     ])
   ).slice(0, 15);
 
-  // Build canonical: prefer slug-based if slug is set
-  const canonicalPath = seoMeta.slug?.trim()
-    ? `/news/${seoMeta.slug}`
-    : articlePath(news);
+  const canonicalUrl = articleUrl(news);
 
   return {
     title: news.title,
@@ -82,14 +90,14 @@ export async function generateMetadata({ params }) {
 
     // ── Canonical ──
     alternates: {
-      canonical: canonicalPath,
+      canonical: canonicalUrl,
     },
 
     // ── Open Graph (Article) ──
     openGraph: {
       title: news.title,
       description,
-      url: articleUrl(news),
+      url: canonicalUrl,
       siteName: SITE_NAME,
       images: [
         {
@@ -142,6 +150,14 @@ export default async function NewsDetailPage({ params }) {
   }
 
   const news = newsResponse.data;
+  const canonicalSlug = news.slug || (news.title ? slugify(news.title) : "") || news.id;
+
+  // ── HTTP 301/308 Permanent Redirect for Legacy ID URLs ──
+  // If the visitor or crawler reached this page via the raw Firestore ID (e.g. /news/L0C5pUh2WeeO4LG0mbTJ)
+  // and the article has a semantic slug, permanently redirect to the canonical slug!
+  if (newsId === news.id && canonicalSlug && canonicalSlug !== news.id) {
+    permanentRedirect(`/news/${encodeURIComponent(canonicalSlug)}`);
+  }
 
   // Smart Recommendation Algorithm:
   // 1. Same category first
@@ -299,7 +315,7 @@ export default async function NewsDetailPage({ params }) {
             (news.category || "").toLowerCase()
           )}`,
         },
-        { "@type": "ListItem", position: 3, name: news.title },
+        { "@type": "ListItem", position: 3, name: news.title, item: articleFullUrl },
       ],
     },
   };

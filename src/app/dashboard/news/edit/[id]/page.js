@@ -13,7 +13,7 @@ import CustomEditor from "@/components/ui/CustomEditor/CustomEditor";
 import ImageUpload from "@/components/ui/ImageUpload/ImageUpload";
 import SeoMetaFields from "@/components/ui/SeoMetaFields/SeoMetaFields";
 import SeoAnalyzerPanel from "@/components/ui/SeoAnalyzerPanel/SeoAnalyzerPanel";
-import { createExcerpt, stripHtml } from "@/lib/content-utils";
+import { createExcerpt, stripHtml, generateSlug } from "@/lib/content-utils";
 
 export default function EditNews() {
   const router = useRouter();
@@ -104,8 +104,13 @@ export default function EditNews() {
       setLoading(false);
       return;
     }
+    const canonicalSlug = seoMeta.slug?.trim()
+      ? generateSlug(seoMeta.slug)
+      : generateSlug(formData.title);
+
     const updatedArticle = {
       title: formData.title,
+      slug: canonicalSlug,
       category: formData.category,
       details: formData.details,
       thumbnail_url: formData.thumbnail_url,
@@ -114,7 +119,7 @@ export default function EditNews() {
       seoMeta: {
         focusKeyword: seoMeta.focusKeyword || "",
         metaDescription: seoMeta.metaDescription || createExcerpt(formData.details, 155),
-        slug: seoMeta.slug || "",
+        slug: canonicalSlug,
         tags: seoMeta.tags || [],
         altText: seoMeta.altText || { thumbnail: "", banner: "" },
         sources: seoMeta.sources || [],

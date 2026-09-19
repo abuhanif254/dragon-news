@@ -165,8 +165,13 @@ export default function CreateNews() {
     const isAdmin = user.role === "admin";
     const authorName = user.displayName || user.name || "The Brain Editorial Team";
 
+    const canonicalSlug = seoMeta.slug?.trim()
+      ? generateSlug(seoMeta.slug)
+      : generateSlug(formData.title);
+
     const newArticle = {
       title: formData.title,
+      slug: canonicalSlug,
       category: formData.category,
       details: formData.details,
       thumbnail_url: formData.thumbnail_url || `https://picsum.photos/seed/${Math.random()}/400/300`,
@@ -176,7 +181,7 @@ export default function CreateNews() {
       seoMeta: {
         focusKeyword: seoMeta.focusKeyword || "",
         metaDescription: seoMeta.metaDescription || createExcerpt(formData.details, 155),
-        slug: seoMeta.slug || "",
+        slug: canonicalSlug,
         tags: seoMeta.tags || [],
         altText: seoMeta.altText || { thumbnail: "", banner: "" },
         sources: seoMeta.sources || [],

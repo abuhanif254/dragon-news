@@ -73,9 +73,15 @@ export function normalizeArticle(id, data = {}) {
     updatedAt ||
     new Date();
 
+  const rawSlug = data.slug || data.seoMeta?.slug;
+  const canonicalSlug = rawSlug?.trim()
+    ? generateSlug(rawSlug)
+    : generateSlug(data.title) || id;
+
   return {
     id,
     _id: id,
+    slug: canonicalSlug,
     title: data.title || "Untitled",
     details: data.details || "",
     image_url: data.image_url || data.imageUrl || data.thumbnail_url || "",
@@ -85,6 +91,7 @@ export function normalizeArticle(id, data = {}) {
     total_view: Number(data.total_view || 0),
     rating: data.rating || { number: 5, badge: "Editorial" },
     sources: Array.isArray(data.sources) ? data.sources : [],
+    seoMeta: data.seoMeta || {},
     createdAt: createdAt?.toISOString?.() || data.createdAt || null,
     updatedAt: updatedAt?.toISOString?.() || data.updatedAt || null,
     publishedAt: publishedAt.toISOString(),

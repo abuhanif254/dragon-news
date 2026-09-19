@@ -62,11 +62,18 @@ export function absoluteImage(url) {
 }
 
 export function articlePath(articleOrId) {
-  const id =
-    typeof articleOrId === "string"
-      ? articleOrId
-      : articleOrId?.id || articleOrId?._id || "";
-  return `/news/${encodeURIComponent(id)}`;
+  if (!articleOrId) return "/news";
+  if (typeof articleOrId === "string") {
+    return `/news/${encodeURIComponent(articleOrId)}`;
+  }
+  const slug =
+    articleOrId.slug ||
+    articleOrId.seoMeta?.slug ||
+    (articleOrId.title ? slugify(articleOrId.title) : "") ||
+    articleOrId.id ||
+    articleOrId._id ||
+    "";
+  return `/news/${encodeURIComponent(slug)}`;
 }
 
 export function articleUrl(articleOrId) {
