@@ -23,40 +23,66 @@ export default function RichTextRenderer({ content }) {
     .replace(/color:\s*[^;"]+;?/gi, '')
     .replace(/background-color:\s*[^;"]+;?/gi, '');
     
-  // Configure DOMPurify to keep id attributes
+  // Configure DOMPurify to keep id attributes and allow iframes for embeds
   const sanitizedContent = DOMPurify.sanitize(noColors, { 
     ADD_ATTR: ['target', 'id'],
-    ADD_TAGS: ['iframe'] // sometimes useful for embedded videos
+    ADD_TAGS: ['iframe']
   });
 
-  // Inject a placeholder for the In-Article Ad after the 2nd paragraph
+  // Calculate paragraph density for intelligent in-article ad placement
+  const totalParagraphs = (sanitizedContent.match(/<\/p>/gi) || []).length;
   let pCount = 0;
-  let hasInjected = false;
-  let withAdPlaceholder = sanitizedContent.replace(/<\/p>/gi, (match) => {
+  let hasInjectedPrimary = false;
+  let hasInjectedSecondary = false;
+
+  const targetPrimaryP = totalParagraphs >= 4 ? 3 : 2;
+  const targetSecondaryP = totalParagraphs >= 7 ? 6 : null;
+
+  let withAdPlaceholders = sanitizedContent.replace(/<\/p>/gi, (match) => {
     pCount++;
-    if (pCount === 2) {
-      hasInjected = true;
-      return `${match}<div id="adsterra-in-article-placeholder"></div>`;
+    let replacement = match;
+
+    // Primary in-article ad slot (high-attention zone)
+    if (pCount === targetPrimaryP) {
+      hasInjectedPrimary = true;
+      replacement += '<div id="adsterra-in-article-primary"></div>';
     }
-    return match;
+
+    // Secondary in-article ad slot (for long-form stories >= 7 paragraphs)
+    if (targetSecondaryP && pCount === targetSecondaryP) {
+      hasInjectedSecondary = true;
+      replacement += '<div id="adsterra-in-article-secondary"></div>';
+    }
+
+    return replacement;
   });
 
-  // If article has only 1 paragraph, place the ad after it
-  if (!hasInjected && pCount === 1) {
-    withAdPlaceholder += '<div id="adsterra-in-article-placeholder"></div>';
+  // Fallback for short articles (1 or 2 paragraphs)
+  if (!hasInjectedPrimary && totalParagraphs > 0) {
+    withAdPlaceholders += '<div id="adsterra-in-article-primary"></div>';
   }
 
-  const parsedReactNodes = parse(withAdPlaceholder, {
+  const parsedReactNodes = parse(withAdPlaceholders, {
     replace: (domNode) => {
-      // Replace the placeholder with the actual Adsterra React component
-      if (domNode.type === 'tag' && domNode.attribs && domNode.attribs.id === 'adsterra-in-article-placeholder') {
+      // 1. Primary In-Article Ad Banner (300x250)
+      if (domNode.type === 'tag' && domNode.attribs && domNode.attribs.id === 'adsterra-in-article-primary') {
         return (
-          <div className="my-8 flex justify-center w-full clear-both">
+          <div className="my-8 flex flex-col items-center justify-center w-full clear-both no-print">
             <AdsterraBanner placement="articleInContent" />
           </div>
         );
       }
 
+      // 2. Secondary In-Article Ad Banner (300x250 for long articles)
+      if (domNode.type === 'tag' && domNode.attribs && domNode.attribs.id === 'adsterra-in-article-secondary') {
+        return (
+          <div className="my-8 flex flex-col items-center justify-center w-full clear-both no-print">
+            <AdsterraBanner placement="articleInContentSecondary" />
+          </div>
+        );
+      }
+
+      // Responsive Next.js Optimized Image Handling
       if (domNode.type === 'tag' && domNode.name === 'img') {
         const { src, alt, width, height } = domNode.attribs;
         
@@ -75,10 +101,11 @@ export default function RichTextRenderer({ content }) {
         );
       }
 
+      // Responsive Embedded Media / Video Iframes
       if (domNode.type === 'tag' && domNode.name === 'iframe') {
         const { src, title } = domNode.attribs || {};
         return (
-          <div className="relative aspect-video my-6 w-full rounded-xl overflow-hidden shadow-lg">
+          <div className="relative aspect-video my-6 w-full rounded-xl overflow-hidden shadow-lg clear-both">
             <iframe
               src={src}
               title={title || "Embedded media"}

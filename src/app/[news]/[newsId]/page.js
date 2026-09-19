@@ -374,14 +374,18 @@ export default async function NewsDetailPage({ params }) {
     },
   };
 
-  // Render RichTextRenderer purely on the server!
-  const contentNode = news.details && news.details.includes("<") && news.details.includes(">") ? (
-    <RichTextRenderer content={news.details} />
-  ) : (
-    <div className="article-prose legacy-content">
-      {news.details}
-    </div>
-  );
+  // Normalize article content into structured HTML paragraphs if plain text
+  const rawDetails = news.details || "";
+  const normalizedContent = rawDetails.includes("<") && rawDetails.includes(">")
+    ? rawDetails
+    : rawDetails
+        .split(/\n\s*\n/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((p) => `<p>${p.replace(/\n/g, "<br />")}</p>`)
+        .join("");
+
+  const contentNode = <RichTextRenderer content={normalizedContent} />;
 
   return (
     <>

@@ -43,13 +43,22 @@ export const ADS_CONFIG = {
       title: "Article Sidebar Banner",
     },
 
-    // 300x250 Medium Rectangle injected into Article Body
+    // 300x250 Medium Rectangle injected into Article Body (Primary - Top 1/3)
     articleInContent: {
       key: "7b4ab590c7e6c0ec63293079a2da40bd",
       width: 300,
       height: 250,
       format: "iframe",
-      title: "In-Article Content Banner",
+      title: "In-Article Primary Banner",
+    },
+
+    // 300x250 Medium Rectangle for Long Articles (Secondary - Mid-to-Bottom)
+    articleInContentSecondary: {
+      key: "7b4ab590c7e6c0ec63293079a2da40bd",
+      width: 300,
+      height: 250,
+      format: "iframe",
+      title: "In-Article Secondary Banner",
     },
 
     // 320x50 Mobile Sticky Footer Ad
