@@ -1,4 +1,4 @@
-import { db } from "./firebase";
+import { db, auth } from "./firebase";
 import {
   collection,
   doc,
@@ -11,6 +11,8 @@ import {
   query,
   where,
   orderBy,
+  limit,
+  increment,
   serverTimestamp,
   arrayUnion,
   arrayRemove,
@@ -206,32 +208,11 @@ export async function deleteNews(id) {
 
 export async function incrementReaction(id, reactionId, incrementBy = 1) {
   try {
-    if (!db || !db.app || !db.app.options) return;
-    const projectId = db.app.options.projectId;
-    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
-    const res = await fetchWithRetry(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        writes: [
-          {
-            transform: {
-              document: `projects/${projectId}/databases/(default)/documents/news/${id}`,
-              fieldTransforms: [
-                {
-                  fieldPath: `reactions.${reactionId}`,
-                  increment: { integerValue: incrementBy }
-                }
-              ]
-            }
-          }
-        ]
-      })
+    if (!db || !id || !reactionId) return;
+    const docRef = doc(db, "news", id);
+    await updateDoc(docRef, {
+      [`reactions.${reactionId}`]: increment(incrementBy)
     });
-
-    if (res.ok) {
-      console.log(`Reaction ${reactionId} incremented by ${incrementBy} for article: ${id}`);
-    }
   } catch (error) {
     console.error("Error updating reaction:", error);
   }
@@ -446,8 +427,9 @@ export const saveAuthorProfile = async (id, profileData) => {
       updatedAt: serverTimestamp(),
     };
 
-    if (profileData.uid) {
-      cleanData.uid = profileData.uid;
+    const resolvedUid = profileData.uid || auth?.currentUser?.uid;
+    if (resolvedUid) {
+      cleanData.uid = resolvedUid;
     }
 
     await setDoc(authorDocRef, cleanData, { merge: true });
@@ -599,22 +581,26 @@ export const addComment = async (articleId, user, content, parentId = null) => {
     const commentsCollection = collection(db, "comments");
     const docRef = await addDoc(commentsCollection, {
       articleId,
+      authorId: user.uid,
       userId: user.uid,
       authorName: user.displayName || user.name || "Anonymous Reader",
       photo: user.photoURL || user.photo || "",
       content: content.trim(),
       flaggedCount: 0,
+      flagCount: 0,
       timestamp: serverTimestamp(),
       parentId,
     });
     return {
       id: docRef.id,
       articleId,
+      authorId: user.uid,
       userId: user.uid,
       authorName: user.displayName || user.name || "Anonymous Reader",
       photo: user.photoURL || user.photo || "",
       content: content.trim(),
       flaggedCount: 0,
+      flagCount: 0,
       timestamp: new Date().toISOString(),
       parentId,
     };
@@ -662,8 +648,9 @@ export const flagComment = async (commentId) => {
     const commentDocRef = doc(db, "comments", commentId);
     const commentSnap = await getDoc(commentDocRef);
     if (commentSnap.exists()) {
-      const nextFlags = (commentSnap.data().flaggedCount || 0) + 1;
-      await updateDoc(commentDocRef, { flaggedCount: nextFlags });
+      const current = commentSnap.data().flaggedCount || commentSnap.data().flagCount || 0;
+      const nextFlags = current + 1;
+      await updateDoc(commentDocRef, { flaggedCount: nextFlags, flagCount: nextFlags });
       return nextFlags;
     }
     return 0;
@@ -750,7 +737,7 @@ export const clearCommentFlags = async (commentId) => {
   if (!db || !commentId) throw new Error("Missing comment ID");
   try {
     const commentDocRef = doc(db, "comments", commentId);
-    await updateDoc(commentDocRef, { flaggedCount: 0 });
+    await updateDoc(commentDocRef, { flaggedCount: 0, flagCount: 0 });
     return { success: true };
   } catch (error) {
     console.error("Error clearing comment flags:", error);
@@ -866,18 +853,23 @@ export async function getNotificationsForUser(user) {
       });
     }
 
-    // 2. Reader comment replies
-    const allCommentsSnap = await getDocs(collection(db, "comments"));
-    const allComments = allCommentsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const userCommentIds = allComments.filter(c => c.userId === user.uid).map(c => c.id);
+    // 2. Reader comment replies: optimized scoped query
+    const commentsCol = collection(db, "comments");
+    const repliesQuery = query(commentsCol, where("parentId", "!=", null), limit(50));
+    const repliesSnap = await getDocs(repliesQuery);
+    const replies = repliesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-    allComments.forEach(c => {
-      if (c.parentId && userCommentIds.includes(c.parentId) && c.userId !== user.uid) {
+    const userCommentsQuery = query(commentsCol, where("userId", "==", user.uid), limit(50));
+    const userCommentsSnap = await getDocs(userCommentsQuery);
+    const userCommentIds = new Set(userCommentsSnap.docs.map((d) => d.id));
+
+    replies.forEach((c) => {
+      if (c.parentId && userCommentIds.has(c.parentId) && c.userId !== user.uid) {
         notifications.push({
           id: `reply_${c.id}`,
           type: "comment_reply",
           title: "New Reply",
-          message: `${c.authorName} replied: "${c.content?.slice(0, 30)}..."`,
+          message: `${c.authorName || "A reader"} replied: "${(c.content || "").slice(0, 30)}..."`,
           link: `/news/${c.articleId}`,
           createdAt: c.timestamp ? (c.timestamp.seconds ? new Date(c.timestamp.seconds * 1000).toISOString() : new Date().toISOString()) : new Date().toISOString(),
         });
@@ -893,31 +885,14 @@ export async function getNotificationsForUser(user) {
 
 export async function submitPollVote(id, optionKey) {
   try {
-    if (!db || !db.app || !db.app.options) return false;
-    const projectId = db.app.options.projectId;
-    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:commit`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        writes: [
-          {
-            transform: {
-              document: `projects/${projectId}/databases/(default)/documents/news/${id}`,
-              fieldTransforms: [
-                {
-                  fieldPath: `poll.options.${optionKey}.votes`,
-                  increment: { integerValue: 1 }
-                }
-              ]
-            }
-          }
-        ]
-      })
+    if (!db || !id || !optionKey) return false;
+    const docRef = doc(db, "news", id);
+    await updateDoc(docRef, {
+      [`poll.options.${optionKey}.votes`]: increment(1),
     });
-    return res.ok;
+    return true;
   } catch (error) {
-    console.error("Error submitting poll vote via REST:", error);
+    console.error("Error submitting poll vote:", error);
     return false;
   }
 }

@@ -45,8 +45,8 @@ service cloud.firestore {
         resource.data.status != "approved" &&
         request.resource.data.status == "pending"
       ) || (
-        // Allow public readers to increment view count by 1 or update reaction counts
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['total_view', 'reactions']) &&
+        // Allow public readers to increment view count by 1, update reaction counts, or vote on polls
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['total_view', 'reactions', 'poll']) &&
         (
           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['total_view']) ||
           request.resource.data.total_view == resource.data.total_view + 1
@@ -148,14 +148,25 @@ service cloud.firestore {
     // Comments collection
     match /comments/{commentId} {
       allow read: if true;
-      allow create: if signedIn() && request.resource.data.authorId == request.auth.uid;
+      allow create: if signedIn() && (
+        request.resource.data.authorId == request.auth.uid ||
+        request.resource.data.userId == request.auth.uid
+      );
       allow update: if isAdmin() || (
         signedIn() && (
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['flagged', 'flagCount']) ||
-          (resource.data.authorId == request.auth.uid && request.resource.data.authorId == request.auth.uid)
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['flagged', 'flagCount', 'flaggedCount']) ||
+          (
+            (resource.data.authorId == request.auth.uid || resource.data.userId == request.auth.uid) &&
+            (request.resource.data.authorId == request.auth.uid || request.resource.data.userId == request.auth.uid)
+          )
         )
       );
-      allow delete: if isAdmin() || (signedIn() && resource.data.authorId == request.auth.uid);
+      allow delete: if isAdmin() || (
+        signedIn() && (
+          resource.data.authorId == request.auth.uid ||
+          resource.data.userId == request.auth.uid
+        )
+      );
     }
   }
 }

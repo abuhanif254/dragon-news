@@ -1,9 +1,26 @@
 import { NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebase-admin";
 import { isAdminEmail } from "@/lib/site";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+
+// Rate limit: max 20 login verification attempts per 15 minutes per IP
+const loginLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  name: "login",
+});
 
 export async function POST(request) {
   try {
+    const ip = getClientIp(request);
+    const limit = loginLimiter(ip);
+    if (limit.isLimited) {
+      return NextResponse.json(
+        { status: false, message: "Too many login attempts. Please try again in a few minutes." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { idToken } = body;
 

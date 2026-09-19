@@ -25,6 +25,7 @@ import BookmarkIcon from "@mui/icons-material/Bookmark";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { subscribeToAuth, logout as firebaseLogout } from "@/lib/auth-service";
+import { isAdminEmail } from "@/lib/site";
 
 const DRAWER_FULL = 260;
 const DRAWER_MINI = 72;
@@ -79,7 +80,8 @@ export default function DashboardLayout({ children }) {
     return pathname.startsWith(path);
   };
 
-  const visibleMenuItems = MENU_ITEMS.filter(item => item.roles.includes(user?.role || "reader"));
+  const userRole = (user && isAdminEmail(user.email)) ? "admin" : (user?.role || "reader");
+  const visibleMenuItems = MENU_ITEMS.filter(item => item.roles.includes(userRole));
 
   /* ─── Sidebar Content ─── */
   const sidebarContent = (

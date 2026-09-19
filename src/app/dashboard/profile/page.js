@@ -107,6 +107,7 @@ export default function EditProfilePage() {
       if (user.role === "admin" || user.role === "writer") {
         const dataToSave = {
           ...profile,
+          uid: user.uid,
           expertise: profile.expertise.split(",").map(s => s.trim()).filter(Boolean),
           updatedAt: new Date().toISOString()
         };
