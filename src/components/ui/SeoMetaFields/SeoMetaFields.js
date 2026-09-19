@@ -186,9 +186,9 @@ export default function SeoMetaFields({ seoMeta, onChange, formData = {} }) {
               <TextField
                 fullWidth
                 label="URL Slug"
-                placeholder="e.g. breaking-news-article-title-2025"
+                placeholder="e.g. breaking-news-article or দর্শন-কী-সংজ্ঞা"
                 value={seoMeta.slug || ""}
-                onChange={(e) => update("slug", e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))}
+                onChange={(e) => update("slug", e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^\p{L}\p{M}\p{N}-]/gu, ""))}
                 sx={fieldSx}
                 InputProps={{
                   startAdornment: <InputAdornment position="start"><Typography variant="caption" sx={{ color: "#94a3b8", fontSize: "0.7rem", fontWeight: 600, whiteSpace: "nowrap" }}>/news/</Typography></InputAdornment>,
@@ -200,7 +200,7 @@ export default function SeoMetaFields({ seoMeta, onChange, formData = {} }) {
                     </InputAdornment>
                   ),
                 }}
-                helperText="Use lowercase letters, numbers, and hyphens only. Click Auto to generate from title."
+                helperText="Letters, numbers, and hyphens (supports English & Bangla). Click Auto to generate from title."
               />
             </Box>
 

@@ -80,13 +80,14 @@ export function articleUrl(articleOrId) {
   return absoluteUrl(articlePath(articleOrId));
 }
 
-export function slugify(text) {
-  return text.toString().toLowerCase()
+export function slugify(text = "") {
+  return String(text)
+    .toLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}\s-]/gu, "")
+    .trim()
     .replace(/\s+/g, '-')           // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
-    .replace(/\-\-+/g, '-')         // Replace multiple - with single -
-    .replace(/^-+/, '')             // Trim - from start of text
-    .replace(/-+$/, '');            // Trim - from end of text
+    .replace(/-+/g, '-')            // Replace multiple - with single -
+    .replace(/^-+|-+$/g, '');       // Trim - from edges
 }
 
 export function authorPath(name = "") {

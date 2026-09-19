@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAllNews } from "@/utils/getAllNews";
 import { absoluteImage, articleUrl, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
-import { cdata, createExcerpt, escapeXml, toRssDate } from "@/lib/content-utils";
+import { cdata, createExcerpt, escapeXml, toRssDate, isBengali } from "@/lib/content-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +28,7 @@ export async function GET(request) {
       .map((news) => {
         const url = articleUrl(news);
         const image = absoluteImage(news.thumbnail_url || news.image_url);
+        const lang = isBengali(news.title + (news.details || "")) ? "bn" : "en";
 
         return `
         <item>
@@ -39,6 +40,7 @@ export async function GET(request) {
           <description>${cdata(createExcerpt(news.details, 220))}</description>
           <content:encoded>${cdata(news.details)}</content:encoded>
           <dc:creator>${cdata(news.author?.name || "The Brain Editorial Team")}</dc:creator>
+          <dc:language>${lang}</dc:language>
           ${image ? `<media:content url="${escapeXml(image)}" medium="image" />` : ""}
         </item>`;
       })

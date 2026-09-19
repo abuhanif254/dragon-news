@@ -15,7 +15,7 @@ import {
   SITE_LOGO,
   slugify,
 } from "@/lib/site";
-import { createExcerpt, toIsoDate, generateSlug } from "@/lib/content-utils";
+import { createExcerpt, toIsoDate, generateSlug, isBengali } from "@/lib/content-utils";
 
 export async function generateStaticParams() {
   // Pre-render the most recent 30 articles at build time (both slug and id for instant response)
@@ -60,6 +60,12 @@ export async function generateMetadata({ params }) {
     news.updatedAt || news.publishedAt || news.author?.published_date
   );
 
+  const isBangla = isBengali(news.title + (news.details || ""));
+  const locale = isBangla ? "bn_BD" : "en_US";
+  const stopWords = isBangla
+    ? ["এবং", "ও", "বা", "কিন্তু", "একটি", "এই", "সেই", "থেকে", "করে", "হলে", "হবে", "আছে", "জন্য"]
+    : ["with", "this", "that", "from", "their", "about", "your", "them", "then", "will"];
+
   // Build keyword list: seoMeta tags first, then fallback to title-extracted words
   const seoTags = Array.isArray(seoMeta.tags) && seoMeta.tags.length > 0
     ? seoMeta.tags
@@ -67,9 +73,9 @@ export async function generateMetadata({ params }) {
   const titleWords = news.title
     ? news.title
         .toLowerCase()
-        .replace(/[^\w\s]/g, "")
+        .replace(/[^\p{L}\p{M}\p{N}\s]/gu, "")
         .split(/\s+/)
-        .filter((w) => w.length > 3 && !["with", "this", "that", "from", "their", "about", "your", "them", "then", "will"].includes(w))
+        .filter((w) => w.length > 2 && !stopWords.includes(w))
     : [];
   const dynamicKeywords = Array.from(
     new Set([
@@ -109,7 +115,7 @@ export async function generateMetadata({ params }) {
         },
       ],
       type: "article",
-      locale: "en_US",
+      locale,
       publishedTime,
       modifiedTime,
       authors: [authorUrl(news.author?.name)],
@@ -231,6 +237,8 @@ export default async function NewsDetailPage({ params }) {
         }))
     : [];
 
+  const isBangla = isBengali(news.title + (news.details || ""));
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -242,7 +250,7 @@ export default async function NewsDetailPage({ params }) {
     articleSection: news.category,
     articleBody: plainText.slice(0, 1000), // Expanded for richer structured data
     wordCount,
-    inLanguage: "en",
+    inLanguage: isBangla ? "bn" : "en",
     keywords: allKeywords,
     isAccessibleForFree: "True",
     about: [

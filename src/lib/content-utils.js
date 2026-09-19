@@ -133,17 +133,28 @@ export function firestoreFieldsToObject(fields = {}) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Detect if text contains Bengali Unicode characters (\u0980-\u09FF).
+ */
+export function isBengali(text = "") {
+  return /[\u0980-\u09FF]/.test(String(text));
+}
+
+/**
  * Convert a string into a URL-safe slug.
+ * Supports both Latin (English) and Unicode (Bengali / multilingual) scripts.
+ * Preserves combining marks (vowels/diacritics: \p{M}) for accurate Bengali spelling.
  * e.g. "Hello World! 123" → "hello-world-123"
+ * e.g. "দর্শন কী? সংজ্ঞা ও ইতিহাস" → "দর্শন-কী-সংজ্ঞা-ও-ইতিহাস"
  */
 export function generateSlug(text = "") {
   return String(text)
     .toLowerCase()
-    .replace(/[^\w\s-]/g, "")   // remove non-word chars except hyphens
-    .replace(/\s+/g, "-")        // spaces → hyphens
-    .replace(/-+/g, "-")         // collapse multiple hyphens
-    .replace(/^-+|-+$/g, "")    // trim leading/trailing hyphens
-    .slice(0, 80);               // max 80 chars
+    .replace(/[^\p{L}\p{M}\p{N}\s-]/gu, "") // Keep Unicode letters, combining marks, numbers, spaces, hyphens
+    .trim()
+    .replace(/\s+/g, "-")                   // spaces → hyphens
+    .replace(/-+/g, "-")                    // collapse multiple hyphens
+    .replace(/^-+|-+$/g, "")               // trim leading/trailing hyphens
+    .slice(0, 90);                          // max 90 chars
 }
 
 /**

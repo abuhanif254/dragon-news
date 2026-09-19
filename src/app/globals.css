@@ -21,8 +21,9 @@
   --border-color: rgba(0,0,0,0.1);
   
   /* Fonts */
-  --font-inter: 'Inter', sans-serif;
+  --font-inter: 'Inter', 'Hind Siliguri', sans-serif;
   --font-playfair: 'Playfair Display', serif;
+  --font-bengali: 'Hind Siliguri', 'Inter', sans-serif;
 }
 
 [data-theme="dark"] {
@@ -45,6 +46,7 @@ html {
 }
 
 body {
+  font-family: var(--font-inter);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-primary);

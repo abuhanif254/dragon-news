@@ -209,7 +209,7 @@ export default async function RootLayout({ children }) {
         {/* ── Google Fonts (Fallback to CDN to avoid build errors) ── */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600;1,700;1,900&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600;1,700;1,900&display=swap" rel="stylesheet" />
         
         {/* ── Preconnect for performance ── */}
         <link rel="preconnect" href="https://firestore.googleapis.com" />
@@ -226,7 +226,7 @@ export default async function RootLayout({ children }) {
           ogImage={ogImage}
         />
       </head>
-      <body style={{ fontFamily: "var(--font-inter)", margin: 0 }}>
+      <body style={{ fontFamily: "var(--font-inter), 'Hind Siliguri', sans-serif", margin: 0 }}>
         <AppRouterCacheProvider>
           <ThemeContextProvider>
             <ToastProvider>

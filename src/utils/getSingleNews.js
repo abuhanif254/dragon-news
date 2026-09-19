@@ -15,6 +15,13 @@ export const getSingleNews = async (slugOrId) => {
     return { status: false, message: "Missing slug or article ID.", data: null };
   }
 
+  let decodedSlug = String(slugOrId);
+  try {
+    decodedSlug = decodeURIComponent(slugOrId);
+  } catch (e) {
+    // ignore
+  }
+
   try {
     if (!db || !db.app || !db.app.options) {
       throw new Error("Firebase DB not initialized");
@@ -56,7 +63,7 @@ export const getSingleNews = async (slugOrId) => {
               fieldFilter: {
                 field: { fieldPath: "slug" },
                 op: "EQUAL",
-                value: { stringValue: slugOrId },
+                value: { stringValue: decodedSlug },
               },
             },
             limit: 1,
@@ -86,10 +93,13 @@ export const getSingleNews = async (slugOrId) => {
       const matched = allResponse.data.find(
         (item) =>
           item.slug === slugOrId ||
+          item.slug === decodedSlug ||
           item.id === slugOrId ||
           item._id === slugOrId ||
           item.seoMeta?.slug === slugOrId ||
-          generateSlug(item.title) === slugOrId
+          item.seoMeta?.slug === decodedSlug ||
+          generateSlug(item.title) === slugOrId ||
+          generateSlug(item.title) === decodedSlug
       );
 
       if (matched && matched.status === "approved") {

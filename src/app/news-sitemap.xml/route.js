@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAllNews } from "@/utils/getAllNews";
 import { articleUrl, absoluteImage, SITE_NAME } from "@/lib/site";
-import { escapeXml, parseDate, toIsoDate } from "@/lib/content-utils";
+import { escapeXml, parseDate, toIsoDate, isBengali } from "@/lib/content-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +34,7 @@ export async function GET() {
       const imageUrl = absoluteImage(article.image_url || article.thumbnail_url);
       const articleLoc = escapeXml(articleUrl(article));
       const keywords = [article.category, SITE_NAME].filter(Boolean).join(", ");
+      const langCode = isBengali(article.title + (article.details || "")) ? "bn" : "en";
 
       return `
   <url>
@@ -44,7 +45,7 @@ export async function GET() {
     <news:news>
       <news:publication>
         <news:name>${escapeXml(SITE_NAME)}</news:name>
-        <news:language>en</news:language>
+        <news:language>${langCode}</news:language>
       </news:publication>
       <news:publication_date>${escapeXml(published)}</news:publication_date>
       <news:title>${escapeXml(article.title)}</news:title>

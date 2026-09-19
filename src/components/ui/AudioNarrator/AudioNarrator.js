@@ -17,6 +17,7 @@ import StopIcon from "@mui/icons-material/Stop";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import SpeedIcon from "@mui/icons-material/Speed";
 import SettingsIcon from "@mui/icons-material/Settings";
+import { isBengali } from "@/lib/content-utils";
 
 export default function AudioNarrator({ text }) {
   const [supported, setSupported] = useState(false);
@@ -37,10 +38,20 @@ export default function AudioNarrator({ text }) {
       
       const loadVoices = () => {
         const list = window.speechSynthesis.getVoices();
-        const englishVoices = list.filter(v => v.lang.startsWith("en-") || v.lang.startsWith("en_") || v.lang === "en");
-        setVoices(englishVoices);
-        if (englishVoices.length > 0) {
-          setSelectedVoiceName(englishVoices[0].name);
+        const isBangla = isBengali(text);
+        let filteredVoices = [];
+        if (isBangla) {
+          filteredVoices = list.filter(v => v.lang.startsWith("bn") || v.lang.includes("bn"));
+        }
+        if (filteredVoices.length === 0) {
+          filteredVoices = list.filter(v => v.lang.startsWith("en-") || v.lang.startsWith("en_") || v.lang === "en");
+        }
+        if (filteredVoices.length === 0) {
+          filteredVoices = list;
+        }
+        setVoices(filteredVoices);
+        if (filteredVoices.length > 0) {
+          setSelectedVoiceName(filteredVoices[0].name);
         }
       };
 
@@ -55,7 +66,7 @@ export default function AudioNarrator({ text }) {
         synthRef.current.cancel();
       }
     };
-  }, []);
+  }, [text]);
 
   const decodeHtmlEntities = (str) => {
     if (!str) return "";
@@ -98,8 +109,9 @@ export default function AudioNarrator({ text }) {
     if (!plainText) return;
 
     setTimeout(() => {
+      const isBangla = isBengali(plainText);
       const utterance = new SpeechSynthesisUtterance(plainText);
-      utterance.lang = "en-US";
+      utterance.lang = isBangla ? "bn-BD" : "en-US";
       
       const activeRate = speakRate !== undefined ? speakRate : rate;
       const activePitch = speakPitch !== undefined ? speakPitch : pitch;
@@ -113,7 +125,10 @@ export default function AudioNarrator({ text }) {
       if (chosenVoice) {
         utterance.voice = chosenVoice;
       } else {
-        const fallback = voicesList.find((v) => v.lang.startsWith("en-") || v.lang.startsWith("en_") || v.lang === "en");
+        const fallback = isBangla
+          ? (voicesList.find((v) => v.lang.startsWith("bn") || v.lang.includes("bn")) ||
+             voicesList.find((v) => v.lang.startsWith("en-") || v.lang.startsWith("en_") || v.lang === "en"))
+          : voicesList.find((v) => v.lang.startsWith("en-") || v.lang.startsWith("en_") || v.lang === "en");
         if (fallback) utterance.voice = fallback;
       }
       
