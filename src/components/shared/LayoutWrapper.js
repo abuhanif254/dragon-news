@@ -27,8 +27,11 @@ export const LayoutWrapper = ({ children }) => {
     <>
       <Navbar />
       <Container
+        maxWidth="xl"
         className="min-h-screen"
         sx={{
+          maxWidth: { xl: "1480px", lg: "1320px" },
+          px: { xs: 2, sm: 3, md: 4 },
           // Reserve bottom padding on mobile when sticky footer ad is active
           // to prevent obscuring content, buttons, or page footer
           pb: showMobileStickyAd ? { xs: "70px", md: 0 } : 0,

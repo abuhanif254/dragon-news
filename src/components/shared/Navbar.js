@@ -31,13 +31,44 @@ function Navbar() {
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [user, setUser] = React.useState(null);
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const [isVisible, setIsVisible] = React.useState(true);
   const [notifications, setNotifications] = React.useState([]);
   const [notiAnchorEl, setNotiAnchorEl] = React.useState(null);
   const pathname = usePathname();
+  const lastScrollY = React.useRef(0);
+  const ticking = React.useRef(false);
 
   React.useEffect(() => {
+    const threshold = 12;
+
+    const updateScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      // Update background styling
+      setIsScrolled(currentScrollY > 20);
+
+      // Always show near top of page
+      if (currentScrollY <= 80) {
+        setIsVisible(true);
+      } else if (Math.abs(currentScrollY - lastScrollY.current) > threshold) {
+        if (currentScrollY > lastScrollY.current) {
+          // Scrolling down: hide navbar
+          setIsVisible(false);
+        } else {
+          // Scrolling up: reveal navbar
+          setIsVisible(true);
+        }
+        lastScrollY.current = currentScrollY;
+      }
+
+      ticking.current = false;
+    };
+
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      if (!ticking.current) {
+        window.requestAnimationFrame(updateScroll);
+        ticking.current = true;
+      }
     };
     
     const handleKeyDown = (e) => {
@@ -47,7 +78,7 @@ function Navbar() {
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("scroll", handleScroll);
@@ -96,7 +127,9 @@ function Navbar() {
           backgroundColor: isScrolled ? "rgba(26, 26, 46, 0.95)" : "#1a1a2e",
           backdropFilter: isScrolled ? "blur(12px)" : "none",
           boxShadow: isScrolled ? "0 4px 20px rgba(0,0,0,0.4)" : "0 2px 12px rgba(0,0,0,0.3)",
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          transform: isVisible || mobileOpen || searchOpen ? "translateY(0)" : "translateY(-100%)",
+          transition: "transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s, box-shadow 0.3s",
+          willChange: "transform",
           zIndex: 1100,
         }}
       >

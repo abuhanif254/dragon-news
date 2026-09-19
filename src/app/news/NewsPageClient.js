@@ -17,7 +17,7 @@ import { createExcerpt } from "@/lib/content-utils";
 
 export default function NewsPageClient({ allNews = [], error = "" }) {
   return (
-    <Container className="my-10">
+    <Box className="my-10">
       <Typography
         variant="h3"
         fontWeight={800}
@@ -103,6 +103,6 @@ export default function NewsPageClient({ allNews = [], error = "" }) {
           <Typography color="text.secondary">No published articles yet.</Typography>
         </Box>
       )}
-    </Container>
+    </Box>
   );
 }

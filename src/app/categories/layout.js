@@ -4,17 +4,15 @@ import React from "react";
 
 const CategoriesLayout = ({ children }) => {
   return (
-    <Box>
-      <Container>
-        <Grid container spacing={2}>
-          <Grid item xs={3}>
-            <CategoryList />
-          </Grid>
-          <Grid item xs={9}>
-            {children}
-          </Grid>
+    <Box sx={{ py: 2 }}>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={3}>
+          <CategoryList />
         </Grid>
-      </Container>
+        <Grid item xs={12} md={9}>
+          {children}
+        </Grid>
+      </Grid>
     </Box>
   );
 };
