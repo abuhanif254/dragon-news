@@ -2,6 +2,7 @@ import { Box, Divider, Stack, Typography, Avatar, Chip } from "@mui/material";
 import SafeImage from "../SafeImage/SafeImage";
 import Link from "next/link";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import { articlePath } from "@/lib/site";
 
 const readingTime = (text = "") => {
   const words = text.trim().split(/\s+/).length;
@@ -11,7 +12,7 @@ const readingTime = (text = "") => {
 const SidebarNewsCard = ({ news, rank }) => {
   return (
     <>
-      <Link href={`/news/${news._id || news.id}`} style={{ display: "block" }}>
+      <Link href={articlePath(news)} style={{ display: "block" }}>
         <Box
           sx={{
             display: "flex",

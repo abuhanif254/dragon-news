@@ -14,6 +14,7 @@ import Image from "next/image";
 import Link from "next/link";
 import CategoryBadge from "@/components/ui/CategoryBadge/CategoryBadge";
 import { createExcerpt } from "@/lib/content-utils";
+import { articlePath } from "@/lib/site";
 
 export default function NewsPageClient({ allNews = [], error = "" }) {
   return (
@@ -39,7 +40,7 @@ export default function NewsPageClient({ allNews = [], error = "" }) {
         {allNews.map((news, index) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={news.id || news._id}>
             <Link
-              href={`/news/${news.id || news._id}`}
+              href={articlePath(news)}
               style={{ textDecoration: "none", color: "inherit" }}
             >
               <Card

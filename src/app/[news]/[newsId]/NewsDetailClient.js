@@ -34,9 +34,19 @@ import { subscribeToAuth } from "@/lib/auth-service";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import AdsterraBanner from "@/components/shared/AdsterraBanner";
+import { isBengali } from "@/lib/content-utils";
 
-const readingTime = (text = "") =>
-  Math.max(1, Math.ceil(text.trim().split(/\s+/).length / 200));
+const toBengaliNumber = (num) => {
+  const bnDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  return String(num).replace(/\d/g, (d) => bnDigits[Number(d)]);
+};
+
+const getReadingTimeText = (text = "", isBangla = false) => {
+  const plain = text.replace(/<[^>]+>/g, " ").trim();
+  const words = plain ? plain.split(/\s+/).filter(Boolean).length : 0;
+  const minutes = Math.max(1, Math.ceil(words / 180));
+  return isBangla ? `${toBengaliNumber(minutes)} মিনিট পড়ার সময়` : `${minutes} min read`;
+};
 
 export default function NewsDetailClient({ news, related, contentNode }) {
   const [fontSize, setFontSize] = useState(1);
@@ -196,8 +206,7 @@ export default function NewsDetailClient({ news, related, contentNode }) {
           alt={news.title}
           style={{ objectFit: "cover" }}
           priority
-          unoptimized
-          sizes="(max-width:768px) 100vw, 90vw"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
         />
         <Box
           sx={{
@@ -297,7 +306,7 @@ export default function NewsDetailClient({ news, related, contentNode }) {
                 <Stack direction="row" alignItems="center" gap={0.75}>
                   <AccessTimeIcon fontSize="small" sx={{ color: "text.secondary" }} />
                   <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                    {readingTime(news.details || "")} min read
+                    {getReadingTimeText(news.details || "", isBengali(news.title + (news.details || "")))}
                   </Typography>
                 </Stack>
                 <Stack direction="row" alignItems="center" gap={0.75}>

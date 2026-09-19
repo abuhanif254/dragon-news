@@ -12,6 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import CategoryBadge from "@/components/ui/CategoryBadge/CategoryBadge";
 import { createExcerpt } from "@/lib/content-utils";
+import { articlePath } from "@/lib/site";
 
 export default function CategoryNewsClient({ data, category }) {
   return (
@@ -23,7 +24,7 @@ export default function CategoryNewsClient({ data, category }) {
       <Grid container spacing={3}>
         {data.map((news, index) => (
           <Grid key={news.id || news._id} item xs={12} md={6}>
-            <Link href={`/news/${news.id || news._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link href={articlePath(news)} style={{ textDecoration: 'none', color: 'inherit' }}>
               <Card sx={{ height: '100%', borderRadius: 3, transition: '0.2s', '&:hover': { transform: 'translateY(-4px)', boxShadow: 4 } }}>
                 <CardActionArea>
                   <CardMedia sx={{ position: 'relative', height: 240, overflow: 'hidden' }}>

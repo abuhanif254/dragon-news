@@ -26,6 +26,7 @@ import Brightness4Icon from "@mui/icons-material/Brightness4";
 import { useThemeContext } from "@/theme/ThemeContextProvider";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { articlePath } from "@/lib/site";
 
 export default function SearchModal({ open, onClose }) {
   const [query, setQuery] = useState("");
@@ -121,7 +122,7 @@ export default function SearchModal({ open, onClose }) {
   const handleSelect = (news) => {
     saveHistory(query);
     onClose();
-    router.push(`/news/${news.id || news._id}`);
+    router.push(articlePath(news));
   };
 
   const handleSeeAll = () => {

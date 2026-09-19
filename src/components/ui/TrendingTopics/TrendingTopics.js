@@ -2,6 +2,7 @@ import { getAllNews } from "@/utils/getAllNews";
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
 import Link from "next/link";
+import { articlePath } from "@/lib/site";
 
 const TrendingTopics = ({ allNews: data = [] }) => {
   if (data.length === 0) return null;
@@ -66,7 +67,7 @@ const TrendingTopics = ({ allNews: data = [] }) => {
       {/* Trending headlines */}
       <Stack spacing={0.6}>
         {trending.map((news, i) => (
-          <Link key={news._id || news.id} href={`/news/${news._id || news.id}`}>
+          <Link key={news._id || news.id} href={articlePath(news)}>
             <Stack direction="row" alignItems="flex-start" gap={1.2} sx={{ transition: "opacity 0.2s", "&:hover": { opacity: 0.75 } }}>
               <Typography
                 variant="caption"

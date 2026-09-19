@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { getAllNews } from "@/utils/getAllNews";
 import Link from "next/link";
+import { articlePath } from "@/lib/site";
 
 const NewsTicker = ({ allNews: data = [] }) => {
 
@@ -47,7 +48,7 @@ const NewsTicker = ({ allNews: data = [] }) => {
           {data.slice(0, 10).map((news, index) => (
             <span key={news.id || news._id} className="mx-6">
               <Link
-                href={`/news/${news.id || news._id}`}
+                href={articlePath(news)}
                 className="hover:text-red-500 transition-colors"
                 style={{ textDecoration: "none" }}
               >

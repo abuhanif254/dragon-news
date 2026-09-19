@@ -36,7 +36,7 @@ export const getSingleNews = async (slugOrId) => {
     if (looksLikeId) {
       try {
         const directUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/news/${slugOrId}?key=${apiKey}`;
-        const directRes = await fetchWithRetry(directUrl, { next: { tags: ["news"] } });
+        const directRes = await fetchWithRetry(directUrl, { next: { tags: ["news"], revalidate: 60 } });
         if (directRes.ok) {
           const doc = await directRes.json();
           const news = normalizeArticle(slugOrId, firestoreFieldsToObject(doc.fields || {}));
@@ -55,7 +55,7 @@ export const getSingleNews = async (slugOrId) => {
       const queryRes = await fetchWithRetry(queryUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        next: { tags: ["news"] },
+        next: { tags: ["news"], revalidate: 60 },
         body: JSON.stringify({
           structuredQuery: {
             from: [{ collectionId: "news" }],

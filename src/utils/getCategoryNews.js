@@ -6,10 +6,18 @@ export const getCategoryNews = async (category) => {
     let newsData = response.data || [];
     
     if (category && category !== "all-news") {
-      const targetCategory = category.toLowerCase();
-      newsData = newsData.filter(
-        (news) => news.category?.toLowerCase() === targetCategory
-      );
+      let decodedCategory = category;
+      try {
+        decodedCategory = decodeURIComponent(category);
+      } catch (e) {
+        // ignore
+      }
+      const target1 = category.toLowerCase();
+      const target2 = decodedCategory.toLowerCase();
+      newsData = newsData.filter((news) => {
+        const cat = (news.category || "").toLowerCase();
+        return cat === target1 || cat === target2;
+      });
     }
 
     return {

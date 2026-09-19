@@ -15,17 +15,14 @@ import { getAllNews } from "@/utils/getAllNews";
 import { createExcerpt } from "@/lib/content-utils";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import Link from "next/link";
+import { articlePath } from "@/lib/site";
 
 const LatestNews = ({ allNews: data = [] }) => {
-
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     return (
-      <Box className="my-5" sx={{ p: 4, textAlign: 'center', bgcolor: '#f8fafc', borderRadius: 4 }}>
-        <Typography variant="h6" color="text.secondary">
-          No news articles found. 
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Publish your first article from the dashboard to see it here!
+      <Box className="my-5" textAlign="center" py={5}>
+        <Typography variant="body1" color="text.secondary">
+          No articles published yet. Check back soon!
         </Typography>
       </Box>
     );
@@ -35,7 +32,7 @@ const LatestNews = ({ allNews: data = [] }) => {
 
   return (
     <Box className="my-5">
-      <Link href={`/news/${mainNews.id || mainNews._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+      <Link href={articlePath(mainNews)} style={{ textDecoration: 'none', color: 'inherit' }}>
         <Card sx={{ borderRadius: 3, overflow: 'hidden', transition: '0.3s', '&:hover': { boxShadow: '0 8px 24px rgba(0,0,0,0.12)' } }}>
           <CardActionArea>
             <CardMedia sx={{ position: 'relative', height: 450, overflow: 'hidden' }}>
@@ -72,7 +69,7 @@ const LatestNews = ({ allNews: data = [] }) => {
       >
         {data.slice(1, 5).map((news) => (
           <Grid key={news.id || news._id} item xs={12} md={6}>
-            <Link href={`/news/${news.id || news._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link href={articlePath(news)} style={{ textDecoration: 'none', color: 'inherit' }}>
               <Card sx={{ borderRadius: 2.5, transition: '0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
                 <CardActionArea>
                   <CardMedia sx={{ position: 'relative', height: 220, overflow: 'hidden' }}>

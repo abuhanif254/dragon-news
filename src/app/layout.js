@@ -175,7 +175,7 @@ function SiteJsonLd({ siteName, siteDescription, ogImage }) {
       "@type": "ContactPoint",
       email: ADMIN_EMAIL,
       contactType: "editorial",
-      availableLanguage: ["en"],
+      availableLanguage: ["en", "bn"],
     },
     publishingPrinciples: `${SITE_URL}/about`,
     ethicsPolicy: `${SITE_URL}/about`,

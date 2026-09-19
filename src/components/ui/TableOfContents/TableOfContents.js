@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Stack } from "@mui/material";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import { generateSlug } from "@/lib/content-utils";
 
 export default function TableOfContents({ htmlContent }) {
   const [headings, setHeadings] = useState([]);
@@ -14,10 +15,6 @@ export default function TableOfContents({ htmlContent }) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, "text/html");
     const elements = Array.from(doc.querySelectorAll("h2, h3"));
-    
-    // We expect RichTextRenderer to have already injected IDs, 
-    // but we can generate them identically here if they don't exist
-    const generateSlug = (text) => text.toLowerCase().replace(/[^\w\-]+/g, '-');
     
     const parsedHeadings = elements.map((elem) => {
       const id = elem.id || generateSlug(elem.textContent);
