@@ -25,6 +25,7 @@ import Header from "./Header";
 import { subscribeToAuth } from "@/lib/auth-service";
 import ThemeToggle from "@/components/ui/ThemeToggle/ThemeToggle";
 import SearchModal from "@/components/ui/SearchModal/SearchModal";
+import { InstallAppButton } from "@/components/ui/PwaInstallPrompt/PwaInstallPrompt";
 
 function Navbar() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -384,6 +385,21 @@ function Navbar() {
           </Stack>
 
           <Box sx={{ px: 2, mt: 3 }}>
+            <Box sx={{ mb: 2 }}>
+              <InstallAppButton
+                variant="outlined"
+                fullWidth
+                sx={{
+                  color: "white",
+                  borderColor: "rgba(255,255,255,0.3)",
+                  bgcolor: "rgba(255,255,255,0.08)",
+                  "&:hover": {
+                    borderColor: "white",
+                    bgcolor: "rgba(255,255,255,0.16)",
+                  },
+                }}
+              />
+            </Box>
             {user ? (
               <Link href="/dashboard" style={{ textDecoration: "none" }} onClick={handleDrawerToggle}>
                 <Button fullWidth variant="contained" sx={{ bgcolor: "#c0392b", fontWeight: 700, borderRadius: 2 }}>

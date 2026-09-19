@@ -7,6 +7,8 @@ import { Container, Box, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AdsterraBanner from "./AdsterraBanner";
 import { ADS_CONFIG } from "@/config/ads";
+import PwaRegistration from "./PwaRegistration";
+import PwaInstallPrompt from "@/components/ui/PwaInstallPrompt/PwaInstallPrompt";
 
 export const LayoutWrapper = ({ children }) => {
   const pathname = usePathname();
@@ -88,6 +90,12 @@ export const LayoutWrapper = ({ children }) => {
           </Box>
         </Box>
       )}
+
+      {/* PWA Background Service Worker Registration */}
+      <PwaRegistration />
+
+      {/* Floating Smart PWA Install Prompt & iOS Guided Sheet */}
+      <PwaInstallPrompt bottomOffset={showMobileStickyAd ? 60 : 0} />
     </>
   );
 };

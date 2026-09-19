@@ -1,35 +1,58 @@
 {
-  "name": "The Brain | Atheism Activism Magazine",
+  "name": "The Brain | Intelligence Without Fear or Favour",
   "short_name": "The Brain",
   "description": "Independent news, analysis, and essays for atheism activism, secular values, free inquiry, and humanist public life.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1a1a2e",
+  "background_color": "#0a0d14",
+  "theme_color": "#c0392b",
   "lang": "en",
   "dir": "ltr",
   "orientation": "portrait-primary",
-  "scope": "/",
-  "categories": ["news", "magazine", "lifestyle"],
+  "categories": ["news", "magazines", "education", "politics"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
   "shortcuts": [
     {
       "name": "Latest News",
       "short_name": "News",
-      "description": "Read the latest news articles",
+      "description": "Browse the latest breaking stories and updates",
       "url": "/news",
-      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "All Categories",
-      "short_name": "Categories",
-      "description": "Browse news by category",
-      "url": "/categories/news?category=all-news",
-      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
+      "name": "Saved Bookmarks",
+      "short_name": "Bookmarks",
+      "description": "Access your saved articles and reading list",
+      "url": "/dashboard/bookmarks",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Search Articles",
+      "short_name": "Search",
+      "description": "Search in-depth analysis and reports",
+      "url": "/search",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ],
-  "icons": [
-    { "src": "/favicon.ico", "sizes": "48x48", "type": "image/x-icon" }
-  ],
-  "screenshots": [],
   "prefer_related_applications": false
 }

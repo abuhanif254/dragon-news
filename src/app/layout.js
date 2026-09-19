@@ -4,6 +4,7 @@ import { LayoutWrapper } from "@/components/shared/LayoutWrapper";
 import { SiteSettingsProvider } from "@/components/shared/SiteSettingsProvider";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import { ToastProvider } from "@/context/ToastContext";
+import { PwaProvider } from "@/context/PwaContext";
 import {
   DEFAULT_OG_IMAGE,
   SITE_DESCRIPTION,
@@ -122,8 +123,22 @@ export async function generateMetadata() {
 
 
 
-    // ── Manifest & Theme ──
-    manifest: "/manifest.json",
+    // ── Manifest & PWA ──
+    manifest: "/manifest.webmanifest",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: siteName,
+    },
+    icons: {
+      icon: [
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [
+        { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      ],
+    },
 
     // ── Misc ──
     category: "news",
@@ -236,7 +251,9 @@ export default async function RootLayout({ children }) {
           <ThemeContextProvider>
             <ToastProvider>
               <SiteSettingsProvider>
-                <LayoutWrapper>{children}</LayoutWrapper>
+                <PwaProvider>
+                  <LayoutWrapper>{children}</LayoutWrapper>
+                </PwaProvider>
               </SiteSettingsProvider>
             </ToastProvider>
           </ThemeContextProvider>

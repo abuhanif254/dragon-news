@@ -23,6 +23,7 @@ import { useState, useEffect } from "react";
 import { NAV_ITEMS } from "@/utils/navItems";
 import { subscribeToNewsletter } from "@/lib/firestore";
 import { useSiteSettings } from "./SiteSettingsProvider";
+import { InstallAppButton } from "@/components/ui/PwaInstallPrompt/PwaInstallPrompt";
 
 const CATEGORIES = ["Technology", "Sports", "Culture", "Entertainment", "Business", "Science"];
 
@@ -323,7 +324,18 @@ const Footer = () => {
           <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.35)" }}>
             © {year || "2026"} The Brain. All rights reserved.
           </Typography>
-          <Stack direction="row" spacing={2.5}>
+          <Stack direction="row" spacing={2.5} alignItems="center" flexWrap="wrap">
+            <InstallAppButton
+              variant="text"
+              size="small"
+              sx={{
+                color: "rgba(255,255,255,0.45)",
+                fontSize: "0.75rem",
+                py: 0,
+                px: 1,
+                "&:hover": { color: "#c0392b", bgcolor: "transparent" },
+              }}
+            />
             {[
               { name: "Privacy Policy", href: "/privacy-policy" },
               { name: "Terms of Service", href: "/terms" },
