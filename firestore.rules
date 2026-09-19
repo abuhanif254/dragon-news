@@ -48,9 +48,19 @@ service cloud.firestore {
         resource.data.status != "approved" &&
         request.resource.data.status == "pending"
       ) || (
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['total_view', 'reactions'])
+        // Allow public readers to increment view count by 1 or update reaction counts
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['total_view', 'reactions']) &&
+        (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['total_view']) ||
+          request.resource.data.total_view == resource.data.total_view + 1
+        )
       );
       allow delete: if isAdmin();
+
+      // Article revisions sub-collection
+      match /revisions/{revId} {
+        allow read, write: if isAdmin() || ownsArticle();
+      }
     }
 
     match /users/{userId} {
@@ -104,6 +114,31 @@ service cloud.firestore {
     match /subscribers/{subscriberId} {
       allow create: if true;
       allow read, update, delete: if isAdmin();
+    }
+
+    // Site settings - publicly readable, admin writable
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Static pages - publicly readable, admin writable
+    match /pages/{slug} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Comments collection
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if signedIn() && request.resource.data.authorId == request.auth.uid;
+      allow update: if isAdmin() || (
+        signedIn() && (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['flagged', 'flagCount']) ||
+          (resource.data.authorId == request.auth.uid && request.resource.data.authorId == request.auth.uid)
+        )
+      );
+      allow delete: if isAdmin() || (signedIn() && resource.data.authorId == request.auth.uid);
     }
   }
 }

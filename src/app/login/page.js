@@ -46,8 +46,6 @@ const LoginPage = () => {
       });
       const data = await res.json();
       if (data.status) {
-        const maxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 7;
-        document.cookie = `admin_token=${data.token}; path=/; max-age=${maxAge}`;
         router.push("/dashboard");
         router.refresh();
       } else {
@@ -65,11 +63,22 @@ const LoginPage = () => {
     setError("");
     try {
       const { loginWithGoogle } = await import("@/lib/auth-service");
-      await loginWithGoogle();
-      document.cookie = `admin_token=google_session; path=/; max-age=604800`;
-      router.push("/dashboard");
+      const user = await loginWithGoogle();
+      const idToken = await user.getIdToken?.();
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      const data = await res.json();
+      if (data.status) {
+        router.push("/dashboard");
+        router.refresh();
+      } else {
+        setError(data.message || "Admin authorization required for dashboard access.");
+      }
     } catch (err) {
-      setError("Google sign-in failed.");
+      setError("Google sign-in failed: " + (err.message || "Access denied."));
     } finally {
       setLoading(false);
     }

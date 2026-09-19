@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminAuth } from "@/lib/firebase-admin";
+import { ADMIN_EMAIL, isAdminEmail } from "@/lib/site";
 
 export async function POST(request) {
   try {
@@ -16,17 +17,31 @@ export async function POST(request) {
     // Verify Firebase ID token on the server using Firebase Admin SDK
     const decodedToken = await adminAuth.verifyIdToken(idToken);
     
-    // Optionally check if user is admin
-    // if (decodedToken.email !== "mohammadbitullah@gmail.com") {
-    //   throw new Error("Unauthorized");
-    // }
+    // Verify that user is the authorized administrator
+    if (!isAdminEmail(decodedToken.email)) {
+      return NextResponse.json(
+        { status: false, message: "Unauthorized: Admin privileges required." },
+        { status: 403 }
+      );
+    }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       status: true,
-      token: idToken,
       message: "Login successful",
-      uid: decodedToken.uid
+      uid: decodedToken.uid,
+      email: decodedToken.email,
     });
+
+    // Set secure HttpOnly cookie for session management
+    response.cookies.set("admin_token", idToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+    });
+
+    return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(

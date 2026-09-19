@@ -1,8 +1,20 @@
 import { savePage } from "@/lib/firestore";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function POST(req) {
   try {
+    const authHeader = req.headers.get("authorization");
+    const secretKey = process.env.ADMIN_SECRET_KEY || process.env.JWT_SECRET;
+
+    // Check for authorization header with Bearer secret
+    const isAuthorized = secretKey && authHeader === `Bearer ${secretKey}`;
+
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized. Secret key required to seed pages." },
+        { status: 401 }
+      );
+    }
     const pages = [
       {
         slug: "about",

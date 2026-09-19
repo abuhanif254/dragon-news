@@ -4,10 +4,15 @@ import { getAllNews } from "@/utils/getAllNews";
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const q = searchParams.get("q")?.toLowerCase() || "";
-    const category = searchParams.get("category") || "";
-    const author = searchParams.get("author") || "";
-    const date = searchParams.get("date") || "";
+    const q = searchParams.get("q")?.slice(0, 100)?.toLowerCase().trim() || "";
+    const category = searchParams.get("category")?.slice(0, 50) || "";
+    const author = searchParams.get("author")?.slice(0, 50) || "";
+    const date = searchParams.get("date")?.slice(0, 20) || "";
+
+    // Require at least one filter criterion to prevent dumping entire database
+    if (!q && !category && !author && !date) {
+      return NextResponse.json({ results: [] });
+    }
 
     const { status, data: allNews } = await getAllNews({ includeFallback: false });
 
@@ -46,8 +51,9 @@ export async function GET(req) {
       });
     }
 
-    // Sort by most recent
+    // Sort by most recent and cap to 40 results
     results.sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
+    results = results.slice(0, 40);
 
     return NextResponse.json(
       { results },
