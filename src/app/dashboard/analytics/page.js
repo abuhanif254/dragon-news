@@ -30,6 +30,7 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 
 import { getNewsForUser } from "@/lib/firestore";
 import { subscribeToAuth } from "@/lib/auth-service";
+import RoleGuard from "@/components/auth/RoleGuard";
 
 // ─── Custom Pure SVG Interactive Line Chart ────────────────────────────────
 function SVGLineChart({ data }) {
@@ -568,7 +569,8 @@ export default function AnalyticsPage() {
   const catColors = ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
 
   return (
-    <Box>
+    <RoleGuard allowedRoles={["admin", "writer"]} fallbackTitle="Performance Analytics">
+      <Box sx={{ maxWidth: 1400, mx: "auto" }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" fontWeight="bold" sx={{ color: "#1e293b", mb: 0.5 }}>
@@ -934,5 +936,6 @@ export default function AnalyticsPage() {
         </Grid2>
       </Grid2>
     </Box>
+    </RoleGuard>
   );
 }

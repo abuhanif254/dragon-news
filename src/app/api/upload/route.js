@@ -10,6 +10,46 @@ const uploadLimiter = createRateLimiter({
 
 export async function POST(req) {
   try {
+    // 1. Verify authentication (Bearer token or admin_token cookie)
+    const authHeader = req.headers.get("authorization");
+    let token = null;
+
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    } else {
+      token = req.cookies.get("admin_token")?.value;
+    }
+
+    if (!token) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required to upload assets." },
+        { status: 401 }
+      );
+    }
+
+    // Verify token validity
+    let isValidUser = false;
+    if (token && token.split(".").length === 3) {
+      try {
+        const payloadBase64 = token.split(".")[1];
+        const payload = JSON.parse(
+          Buffer.from(payloadBase64.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf-8")
+        );
+        if (payload.exp && payload.exp > Math.floor(Date.now() / 1000) && payload.user_id) {
+          isValidUser = true;
+        }
+      } catch (e) {
+        isValidUser = false;
+      }
+    }
+
+    if (!isValidUser) {
+      return NextResponse.json(
+        { success: false, error: "Invalid or expired session token. Please re-authenticate." },
+        { status: 401 }
+      );
+    }
+
     const ip = getClientIp(req);
     const limit = uploadLimiter(ip);
     if (limit.isLimited) {

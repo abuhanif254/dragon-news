@@ -1,3 +1,5 @@
+import { auth } from "@/lib/firebase";
+
 /**
  * Uploads an image securely via the server-side API proxy.
  * 
@@ -13,8 +15,21 @@ export const uploadImageToStorage = async (file, folder = "general") => {
   if (folder) formData.append("folder", folder);
 
   try {
+    const headers = {};
+    if (auth?.currentUser) {
+      try {
+        const token = await auth.currentUser.getIdToken();
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+      } catch (e) {
+        // Fallback to cookie authentication
+      }
+    }
+
     const response = await fetch("/api/upload", {
       method: "POST",
+      headers,
       body: formData,
     });
 

@@ -24,10 +24,11 @@ import { triggerRevalidation } from "./actions";
 export async function getAllNews({ includeUnpublished = true } = {}) {
   const newsCollection = collection(db, "news");
   try {
-    const querySnapshot = await getDocs(newsCollection);
-    const news = querySnapshot.docs
-      .map((item) => normalizeArticle(item.id, item.data()))
-      .filter((item) => includeUnpublished || item.status === "approved");
+    const q = includeUnpublished
+      ? newsCollection
+      : query(newsCollection, where("status", "==", "approved"));
+    const querySnapshot = await getDocs(q);
+    const news = querySnapshot.docs.map((item) => normalizeArticle(item.id, item.data()));
 
     return news.sort((a, b) => {
       const dateA = new Date(a.publishedAt || a.createdAt || 0);
@@ -426,37 +427,33 @@ export const getAuthorProfile = async (name) => {
 
 export const saveAuthorProfile = async (id, profileData) => {
   try {
-    if (!db || !db.app || !db.app.options) throw new Error("Firebase DB not initialized");
-    const projectId = db.app.options.projectId;
-    const apiKey = db.app.options.apiKey;
+    if (!db) throw new Error("Firebase DB not initialized");
     
-    const docId = id || profileData.name.toLowerCase().replace(/\s+/g, '-');
-    const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/authors/${docId}?key=${apiKey}`;
-    const res = await fetchWithRetry(url, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        fields: {
-          name: { stringValue: profileData.name },
-          image: { stringValue: profileData.image || "" },
-          role: { stringValue: profileData.role || "" },
-          bio: { stringValue: profileData.bio || "" },
-          expertise: { arrayValue: { values: (profileData.expertise || []).map(s => ({ stringValue: s })) } },
-          social: {
-            mapValue: {
-              fields: {
-                twitter: { stringValue: profileData.social?.twitter || "" },
-                linkedin: { stringValue: profileData.social?.linkedin || "" },
-                website: { stringValue: profileData.social?.website || "" }
-              }
-            }
-          }
-        }
-      })
-    });
-    return await res.json();
+    const docId = id || (profileData.name ? profileData.name.toLowerCase().replace(/\s+/g, '-') : `author-${Date.now()}`);
+    const authorDocRef = doc(db, "authors", docId);
+
+    const cleanData = {
+      name: profileData.name || "",
+      image: profileData.image || "",
+      role: profileData.role || "",
+      bio: profileData.bio || "",
+      expertise: Array.isArray(profileData.expertise) ? profileData.expertise : [],
+      social: {
+        twitter: profileData.social?.twitter || "",
+        linkedin: profileData.social?.linkedin || "",
+        website: profileData.social?.website || "",
+      },
+      updatedAt: serverTimestamp(),
+    };
+
+    if (profileData.uid) {
+      cleanData.uid = profileData.uid;
+    }
+
+    await setDoc(authorDocRef, cleanData, { merge: true });
+    return { success: true, id: docId, ...cleanData };
   } catch (error) {
-    console.error("Error saving author profile via REST:", error);
+    console.error("Error saving author profile via SDK:", error);
     throw error;
   }
 };

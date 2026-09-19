@@ -19,6 +19,7 @@ import ImageUpload from "@/components/ui/ImageUpload/ImageUpload";
 import SeoMetaFields from "@/components/ui/SeoMetaFields/SeoMetaFields";
 import SeoAnalyzerPanel from "@/components/ui/SeoAnalyzerPanel/SeoAnalyzerPanel";
 import { createExcerpt, stripHtml } from "@/lib/content-utils";
+import RoleGuard from "@/components/auth/RoleGuard";
 
 export default function CreateNews() {
   const router = useRouter();
@@ -248,8 +249,9 @@ export default function CreateNews() {
   };
 
   return (
-    <Box>
-      <Button
+    <RoleGuard allowedRoles={["admin", "writer"]} fallbackTitle="Publish Article">
+      <Box>
+        <Button
         startIcon={<ArrowBackIcon />}
         onClick={() => router.back()}
         sx={{ mb: 3, fontWeight: 600, color: "#64748b", textTransform: "none", "&:hover": { color: "#ef4444" } }}
@@ -555,5 +557,6 @@ export default function CreateNews() {
         </DialogActions>
       </Dialog>
     </Box>
+    </RoleGuard>
   );
 }

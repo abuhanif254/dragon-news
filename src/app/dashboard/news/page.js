@@ -18,6 +18,7 @@ import { getNewsForUser, deleteNews, updateNewsStatus } from "@/lib/firestore";
 import { useRouter } from "next/navigation";
 import { subscribeToAuth } from "@/lib/auth-service";
 import { useConfirm } from "@/context/ToastContext";
+import RoleGuard from "@/components/auth/RoleGuard";
 
 const ITEMS_PER_PAGE = 10;
 const CAT_COLORS = {
@@ -194,9 +195,10 @@ export default function ManageNews() {
       item.status !== "approved");
 
   return (
-    <Box>
-      {/* Header */}
-      <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} gap={2} sx={{ mb: 3 }}>
+    <RoleGuard allowedRoles={["admin", "writer"]} fallbackTitle="Articles Management">
+      <Box>
+        {/* Header */}
+        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ sm: "center" }} gap={2} sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h4" fontWeight={800} sx={{ color: "#0f172a" }}>
             Manage Articles
@@ -442,5 +444,6 @@ export default function ManageNews() {
         )}
       </Card>
     </Box>
+    </RoleGuard>
   );
 }

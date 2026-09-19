@@ -11,10 +11,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return signedIn() &&
-        request.auth.token.email == adminEmail() &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+      return signedIn() && request.auth.token.email == adminEmail();
     }
 
     function isWriter() {
@@ -73,7 +70,12 @@ service cloud.firestore {
       allow update: if signedIn() && (
         (userId == request.auth.uid &&
           request.resource.data.role == resource.data.role &&
-          request.resource.data.email == resource.data.email) ||
+          request.resource.data.email == resource.data.email &&
+          (
+            !request.resource.data.diff(resource.data).affectedKeys().hasAny(['writerApplicationStatus']) ||
+            request.resource.data.writerApplicationStatus == "pending" ||
+            request.resource.data.writerApplicationStatus == resource.data.writerApplicationStatus
+          )) ||
         (isAdmin() &&
           (request.resource.data.role != "admin" || request.resource.data.email == adminEmail()))
       );
@@ -119,12 +121,15 @@ service cloud.firestore {
     }
 
     match /messages/{messageId} {
-      allow create: if true;
+      allow create: if request.resource.data.email is string &&
+        request.resource.data.email.size() > 3 &&
+        request.resource.data.message is string;
       allow read, update, delete: if isAdmin();
     }
 
     match /subscribers/{subscriberId} {
-      allow create: if true;
+      allow create: if request.resource.data.email is string &&
+        request.resource.data.email.size() > 3;
       allow read, update, delete: if isAdmin();
     }
 

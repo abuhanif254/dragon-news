@@ -14,6 +14,7 @@ import ImageUpload from "@/components/ui/ImageUpload/ImageUpload";
 import SeoMetaFields from "@/components/ui/SeoMetaFields/SeoMetaFields";
 import SeoAnalyzerPanel from "@/components/ui/SeoAnalyzerPanel/SeoAnalyzerPanel";
 import { createExcerpt, stripHtml, generateSlug } from "@/lib/content-utils";
+import RoleGuard from "@/components/auth/RoleGuard";
 
 export default function EditNews() {
   const router = useRouter();
@@ -170,11 +171,32 @@ export default function EditNews() {
     );
   }
 
+  if (!article) {
+    return (
+      <RoleGuard allowedRoles={["admin", "writer"]} fallbackTitle="Article Editor">
+        <Box maxWidth="600px" mx="auto" py={8} px={2} textAlign="center">
+          <Alert severity={status.type || "error"} sx={{ mb: 3, borderRadius: 2 }}>
+            {status.message || "Article not found or you do not have permission to edit this article."}
+          </Alert>
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={() => router.push("/dashboard/news")}
+            sx={{ fontWeight: 700, textTransform: "none", borderRadius: 2 }}
+          >
+            Back to Articles
+          </Button>
+        </Box>
+      </RoleGuard>
+    );
+  }
+
   return (
-    <Box maxWidth="1400px" mx="auto">
-      <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} sx={{ mb: 3, fontWeight: "bold", color: "#64748b", textTransform: "none", "&:hover": { color: "#ef4444" } }}>
-        Back to Articles
-      </Button>
+    <RoleGuard allowedRoles={["admin", "writer"]} fallbackTitle="Article Editor">
+      <Box maxWidth="1400px" mx="auto">
+        <Button startIcon={<ArrowBackIcon />} onClick={() => router.back()} sx={{ mb: 3, fontWeight: "bold", color: "#64748b", textTransform: "none", "&:hover": { color: "#ef4444" } }}>
+          Back to Articles
+        </Button>
 
       {activeRevisionId && (
         <Alert severity="warning" sx={{ mb: 3, borderRadius: 2.5 }}
@@ -275,5 +297,6 @@ export default function EditNews() {
         </Grid>
       </Grid>
     </Box>
+    </RoleGuard>
   );
 }
