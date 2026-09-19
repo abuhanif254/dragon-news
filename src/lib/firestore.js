@@ -896,3 +896,44 @@ export async function submitPollVote(id, optionKey) {
     return false;
   }
 }
+
+// ─── NEWSLETTER CAMPAIGNS ───────────────────────────────────────────────────
+export async function saveNewsletterCampaign(campaignData) {
+  try {
+    if (!db) throw new Error("Firebase DB not initialized");
+    const campaignsCol = collection(db, "newsletter_campaigns");
+    const docRef = await addDoc(campaignsCol, {
+      ...campaignData,
+      createdAt: serverTimestamp(),
+      dispatchedAt: new Date().toISOString(),
+    });
+    return { id: docRef.id, ...campaignData };
+  } catch (error) {
+    console.error("Error saving newsletter campaign:", error);
+    throw error;
+  }
+}
+
+export async function getNewsletterCampaigns() {
+  try {
+    if (!db) return [];
+    const campaignsCol = collection(db, "newsletter_campaigns");
+    const q = query(campaignsCol, orderBy("createdAt", "desc"), limit(25));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => {
+      const data = d.data();
+      let ts = data.dispatchedAt;
+      if (!ts && data.createdAt?.seconds) {
+        ts = new Date(data.createdAt.seconds * 1000).toISOString();
+      }
+      return {
+        id: d.id,
+        ...data,
+        dispatchedAt: ts || new Date().toISOString(),
+      };
+    });
+  } catch (error) {
+    console.error("Error getting newsletter campaigns:", error);
+    return [];
+  }
+}
