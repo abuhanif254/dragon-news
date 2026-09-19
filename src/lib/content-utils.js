@@ -276,3 +276,43 @@ export function checkInlineImageAlts(html = "") {
     ratio: images.length > 0 ? withAlt.length / images.length : 1,
   };
 }
+
+/**
+ * Normalizes legal page HTML content to guard against misformatted rich text:
+ * 1. Converts &nbsp; to normal spaces so sentences wrap properly.
+ * 2. Removes empty <h2>, <h3>, <p> tags.
+ * 3. Demotes oversized headings (>80 chars) or browser lists mistakenly wrapped in <h2>/<h3> to <p>.
+ * 4. Ensures numbered sub-sections (e.g. 3.1) are formatted as <h3> and main sections as <h2>.
+ */
+export function normalizeLegalContent(html = "") {
+  if (!html) return "";
+
+  let clean = String(html)
+    .replace(/&nbsp;/gi, " ")
+    .replace(/<h[23]>\s*<\/h[23]>/gi, "")
+    .replace(/<p>\s*<\/p>/gi, "");
+
+  clean = clean.replace(/<(h[23])(\s+[^>]*)?>([\s\S]*?)<\/\1>/gi, (match, tag, attrs, inner) => {
+    const plainText = inner.replace(/<[^>]+>/g, "").trim();
+
+    // Check if this is a prose paragraph or bullet erroneously tagged as a heading
+    if (
+      plainText.length > 80 ||
+      /^(Google Chrome|Mozilla Firefox|Apple Safari|Microsoft Edge|Email:|Mailing Address:|Here are links)/i.test(plainText)
+    ) {
+      if (/^(Google Chrome|Mozilla Firefox|Apple Safari|Microsoft Edge|Email:|Mailing Address:)/i.test(plainText)) {
+        return `<p><strong>${inner}</strong></p>`;
+      }
+      return `<p>${inner}</p>`;
+    }
+
+    // Numbered sub-sections (e.g. 3.1., 6.2.) become h3
+    if (/^\d+\.\d+/.test(plainText)) {
+      return `<h3>${inner}</h3>`;
+    }
+
+    return `<h2>${inner}</h2>`;
+  });
+
+  return clean;
+}

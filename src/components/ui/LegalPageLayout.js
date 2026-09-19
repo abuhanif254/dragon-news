@@ -1,9 +1,10 @@
 "use client";
-import React, { useEffect, useState, useRef } from "react";
-import { Box, Container, Typography, Grid, Paper, Stack } from "@mui/material";
+import React, { useEffect, useState, useRef, useMemo } from "react";
+import { Box, Container, Typography, Paper, Stack } from "@mui/material";
 import RichTextRenderer from "@/components/shared/RichTextRenderer";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
+import { normalizeLegalContent } from "@/lib/content-utils";
 
 function slugify(text) {
   return text
@@ -20,11 +21,17 @@ export default function LegalPageLayout({ title, content, lastUpdated }) {
   const [activeId, setActiveId] = useState("");
   const contentRef = useRef(null);
 
+  const normalizedContent = useMemo(() => normalizeLegalContent(content), [content]);
+
   useEffect(() => {
     if (!contentRef.current) return;
 
-    // Find all h2 and h3 elements within the rich text content
-    const elements = Array.from(contentRef.current.querySelectorAll("h2, h3"));
+    // Find all valid h2 and h3 elements within the rich text content (excluding oversized prose)
+    const elements = Array.from(contentRef.current.querySelectorAll("h2, h3")).filter((elem) => {
+      const text = elem.innerText.trim();
+      return text.length > 0 && text.length <= 80;
+    });
+
     const newHeadings = elements.map((elem) => {
       let id = elem.id;
       if (!id) {
@@ -59,7 +66,7 @@ export default function LegalPageLayout({ title, content, lastUpdated }) {
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [content, activeId]);
+  }, [normalizedContent, activeId]);
 
   const scrollToHeading = (e, id) => {
     e.preventDefault();
@@ -116,48 +123,68 @@ export default function LegalPageLayout({ title, content, lastUpdated }) {
 
       {/* Content & Sidebar Layout */}
       <Container maxWidth="lg">
-        <Grid container spacing={6} justifyContent="center">
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: headings.length > 0
+              ? { xs: "1fr", md: "260px minmax(0, 1fr)", lg: "280px minmax(0, 1fr)" }
+              : "1fr",
+            gap: { xs: 4, md: 5, lg: 6 },
+            alignItems: "start",
+          }}
+        >
           {/* TOC Sidebar */}
           {headings.length > 0 && (
-            <Grid item xs={12} md={4} lg={3} sx={{ display: { xs: "none", md: "block" } }}>
-              <Box sx={{ position: "sticky", top: 120 }}>
-                <Typography variant="overline" sx={{ fontWeight: 700, color: "#94a3b8", letterSpacing: "0.1em", display: "block", mb: 2 }}>
-                  Contents
-                </Typography>
-                <Stack spacing={1}>
-                  {headings.map((heading) => (
-                    <Box
-                      key={heading.id}
-                      component="a"
-                      href={`#${heading.id}`}
-                      onClick={(e) => scrollToHeading(e, heading.id)}
-                      sx={{
-                        textDecoration: "none",
-                        color: activeId === heading.id ? "#c0392b" : "#475569",
-                        fontSize: heading.level === 2 ? "0.95rem" : "0.85rem",
-                        fontWeight: activeId === heading.id ? 700 : 500,
-                        pl: heading.level === 3 ? 2 : 0,
-                        display: "flex",
-                        alignItems: "center",
-                        transition: "all 0.2s",
-                        "&:hover": { color: "#c0392b" }
-                      }}
-                    >
-                      {activeId === heading.id && <KeyboardArrowRightIcon sx={{ fontSize: 16, mr: 0.5 }} />}
-                      {heading.text}
-                    </Box>
-                  ))}
-                </Stack>
-              </Box>
-            </Grid>
+            <Box
+              component="aside"
+              sx={{
+                display: { xs: "none", md: "block" },
+                position: "sticky",
+                top: 120,
+                maxHeight: "calc(100vh - 160px)",
+                overflowY: "auto",
+                pr: 2,
+                "&::-webkit-scrollbar": { width: 4 },
+                "&::-webkit-scrollbar-thumb": { bgcolor: "rgba(0,0,0,0.15)", borderRadius: 2 },
+              }}
+            >
+              <Typography variant="overline" sx={{ fontWeight: 700, color: "#94a3b8", letterSpacing: "0.1em", display: "block", mb: 2 }}>
+                Contents
+              </Typography>
+              <Stack spacing={1}>
+                {headings.map((heading) => (
+                  <Box
+                    key={heading.id}
+                    component="a"
+                    href={`#${heading.id}`}
+                    onClick={(e) => scrollToHeading(e, heading.id)}
+                    sx={{
+                      textDecoration: "none",
+                      color: activeId === heading.id ? "#c0392b" : "#475569",
+                      fontSize: heading.level === 2 ? "0.92rem" : "0.82rem",
+                      fontWeight: activeId === heading.id ? 700 : 500,
+                      pl: heading.level === 3 ? 2 : 0,
+                      display: "flex",
+                      alignItems: "center",
+                      transition: "all 0.2s",
+                      wordBreak: "break-word",
+                      "&:hover": { color: "#c0392b" }
+                    }}
+                  >
+                    {activeId === heading.id && <KeyboardArrowRightIcon sx={{ fontSize: 16, mr: 0.5, flexShrink: 0 }} />}
+                    <span>{heading.text}</span>
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
           )}
 
           {/* Main Document Content */}
-          <Grid item xs={12} md={headings.length > 0 ? 8 : 12} lg={headings.length > 0 ? 9 : 12}>
+          <Box sx={{ minWidth: 0, width: "100%" }}>
             <Paper 
               elevation={0} 
               sx={{ 
-                p: { xs: 3, md: 6 }, 
+                p: { xs: 3, sm: 4, md: 6 }, 
                 borderRadius: 4, 
                 border: "1px solid", 
                 borderColor: "#e2e8f0",
@@ -166,14 +193,18 @@ export default function LegalPageLayout({ title, content, lastUpdated }) {
               }}
             >
               <Box ref={contentRef} sx={{
-                "& h2": { mt: 6, mb: 3, pt: 2, borderTop: "1px solid #f1f5f9" },
-                "& h2:first-of-type": { mt: 0, pt: 0, borderTop: "none" }
+                "& h2": { mt: 5, mb: 2.5, pt: 2, borderTop: "1px solid #f1f5f9", fontSize: { xs: "1.35rem", md: "1.6rem" }, fontWeight: 700, color: "#0f172a" },
+                "& h2:first-of-type": { mt: 0, pt: 0, borderTop: "none" },
+                "& h3": { mt: 3, mb: 1.5, fontSize: { xs: "1.15rem", md: "1.25rem" }, fontWeight: 600, color: "#1e293b" },
+                "& p": { my: 2, lineHeight: 1.85, color: "#334155", fontSize: "1rem" },
+                "& ul, & ol": { my: 2, pl: 3, lineHeight: 1.85, color: "#334155" },
+                "& li": { mb: 1 }
               }}>
-                <RichTextRenderer content={content} />
+                <RichTextRenderer content={normalizedContent} />
               </Box>
             </Paper>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Container>
     </Box>
   );
