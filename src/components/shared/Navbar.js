@@ -199,28 +199,8 @@ function Navbar() {
               })}
             </Box>
 
-            {/* Social icons - desktop */}
-            <Box sx={{ display: { xs: "none", md: "flex" } }}>
-              <Stack direction="row">
-                <IconButton component="a" href="https://www.facebook.com/bitulla" target="_blank" sx={{ color: "white", "&:hover": { color: "#4267B2" } }}>
-                  <FacebookIcon />
-                </IconButton>
-                <IconButton component="a" href="https://x.com/MohammadBitull1" target="_blank" sx={{ color: "white", "&:hover": { color: "#1DA1F2" } }}>
-                  <TwitterIcon />
-                </IconButton>
-                <IconButton component="a" href="https://www.youtube.com/@MohammadBitullah" target="_blank" sx={{ color: "white", "&:hover": { color: "#FF0000" } }}>
-                  <YouTubeIcon />
-                </IconButton>
-                <IconButton component="a" href="https://www.instagram.com/bitullah_aj" target="_blank" sx={{ color: "white", "&:hover": { color: "#E1306C" } }}>
-                  <InstagramIcon />
-                </IconButton>
-                <IconButton component="a" href="https://www.linkedin.com/in/md-abu-hanif-mia" target="_blank" sx={{ color: "white", "&:hover": { color: "#0A66C2" } }}>
-                  <LinkedInIcon />
-                </IconButton>
-              </Stack>
-              
-              <Divider orientation="vertical" flexItem sx={{ mx: 1.5, borderColor: "rgba(255,255,255,0.1)", height: 24, alignSelf: "center" }} />
-              
+            {/* Desktop utilities & Auth actions */}
+            <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 1.5 }}>
               <Box 
                 onClick={() => setSearchOpen(true)}
                 sx={{ 
@@ -254,7 +234,7 @@ function Navbar() {
               
               <ThemeToggle />
 
-              <Divider orientation="vertical" flexItem sx={{ mx: 1.5, borderColor: "rgba(255,255,255,0.1)", height: 24, alignSelf: "center" }} />
+              <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: "rgba(255,255,255,0.1)", height: 24, alignSelf: "center" }} />
 
               <Stack direction="row" spacing={1}>
                 {user ? (
@@ -290,23 +270,67 @@ function Navbar() {
               </Stack>
             </Box>
 
-            {/* Mobile menu and theme toggle */}
+            {/* Mobile menu, theme toggle and 1-tap auth */}
             <Box sx={{ display: { xs: "flex", md: "none" }, ml: "auto", alignItems: "center", gap: 1 }}>
-              <IconButton onClick={() => setSearchOpen(true)} sx={{ color: "white" }}>
-                <SearchIcon />
+              <IconButton onClick={() => setSearchOpen(true)} sx={{ color: "white", p: 0.8 }}>
+                <SearchIcon fontSize="small" />
               </IconButton>
               {user && (
-                <IconButton onClick={handleOpenNoti} sx={{ color: "white" }}>
+                <IconButton onClick={handleOpenNoti} sx={{ color: "white", p: 0.8 }}>
                   <Badge badgeContent={notifications.length} color="error">
-                    <NotificationsIcon />
+                    <NotificationsIcon fontSize="small" />
                   </Badge>
                 </IconButton>
               )}
               <ThemeToggle />
+              
+              {/* Direct 1-tap Mobile Auth button */}
+              {user ? (
+                <Link href="/dashboard" style={{ textDecoration: "none" }}>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    sx={{
+                      bgcolor: "#c0392b",
+                      fontWeight: 700,
+                      px: 1.2,
+                      py: 0.4,
+                      fontSize: "0.75rem",
+                      borderRadius: 1.5,
+                      textTransform: "none",
+                      "&:hover": { bgcolor: "#a93226" },
+                    }}
+                  >
+                    Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/login" style={{ textDecoration: "none" }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      color: "white",
+                      borderColor: "rgba(255,255,255,0.4)",
+                      fontWeight: 700,
+                      px: 1.2,
+                      py: 0.4,
+                      fontSize: "0.75rem",
+                      borderRadius: 1.5,
+                      textTransform: "none",
+                      "&:hover": { borderColor: "#f39c12", color: "#f39c12" },
+                    }}
+                  >
+                    Sign In
+                  </Button>
+                </Link>
+              )}
+
               <IconButton
-                size="large"
+                size="medium"
                 onClick={handleDrawerToggle}
-                sx={{ color: "white" }}
+                sx={{ color: "white", p: 0.8 }}
+                aria-label="Open navigation menu"
               >
                 <MenuIcon />
               </IconButton>
