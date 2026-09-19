@@ -58,7 +58,7 @@ export default function HomeClient({ allNews, error }) {
       </Box>
 
       {/* Magazine Grid */}
-      <Box className="fade-in-up" sx={{ animationDelay: '0.5s', mt: 6 }}>
+      <Box className="fade-in-up" sx={{ animationDelay: '0.5s', mt: 3 }}>
         <FeaturedGrid articles={topStories} title="Top Stories" />
       </Box>
 

@@ -5,12 +5,14 @@ import { ADS_CONFIG } from "@/config/ads";
 /**
  * High-performance Adsterra Banner component.
  * 
- * Features:
- * - Isolated browsing context via iframe srcDoc (prevents document.write crashes & window.atOptions clashing)
- * - Viewport lazy loading using IntersectionObserver (improves FCP, LCP, and TBT)
- * - Zero Cumulative Layout Shift (CLS) with reserved minHeight container
- * - Responsive max-width clipping to avoid mobile horizontal scrollbars
- * - Centralized config integration via `placement` prop or explicit `adKey`/`width`/`height`
+ * Engineering Solutions:
+ * 1. Isolated Context without Sandbox: Runs in an iframe without restrictive sandbox
+ *    attributes that strip the Referer header (Adsterra returns 0 bytes if Referer is null/opaque).
+ * 2. Viewport Lazy Loading: IntersectionObserver loads the ad only when near the viewport.
+ * 3. Localhost Awareness: Adsterra rejects localhost and only serves on live registered domains.
+ *    Shows a developer placeholder on localhost so developers don't see broken white space.
+ * 4. Auto-Collapse on AdBlock / No-Fill: If invoke.js is blocked or returns empty, the container
+ *    and "ADVERTISEMENT" label automatically collapse completely (0px height).
  */
 export default function AdsterraBanner({
   placement,
@@ -22,6 +24,8 @@ export default function AdsterraBanner({
 }) {
   const containerRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [isFailed, setIsFailed] = useState(false);
+  const [isLocalhost, setIsLocalhost] = useState(false);
 
   // Resolve config from placement preset or direct props
   const preset = placement ? ADS_CONFIG.adsterra?.[placement] : null;
@@ -30,11 +34,39 @@ export default function AdsterraBanner({
   const height = directHeight || preset?.height || 250;
   const title = preset?.title || `Adsterra Ad ${key || "banner"}`;
 
+  // Check if running on localhost/local network
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const host = window.location.hostname;
+      if (
+        host === "localhost" ||
+        host === "127.0.0.1" ||
+        host.startsWith("192.168.") ||
+        host.endsWith(".local")
+      ) {
+        setIsLocalhost(true);
+      }
+    }
+  }, []);
+
+  // Listen for ad failure or empty creative from iframe to auto-collapse
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (
+        (event.data?.type === "ADSTERRA_FAILED" || event.data?.type === "ADSTERRA_EMPTY") &&
+        event.data?.key === key
+      ) {
+        setIsFailed(true);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [key]);
+
   // Viewport Lazy Loading: only render the iframe when near the viewport
   useEffect(() => {
     if (!ADS_CONFIG.enabled || !key) return;
 
-    // Fallback if IntersectionObserver is unavailable
     if (typeof IntersectionObserver === "undefined") {
       setIsVisible(true);
       return;
@@ -48,7 +80,7 @@ export default function AdsterraBanner({
         }
       },
       {
-        rootMargin: "250px", // Pre-load 250px before entering viewport for smooth experience
+        rootMargin: "250px",
       }
     );
 
@@ -63,18 +95,63 @@ export default function AdsterraBanner({
     };
   }, [key]);
 
-  // Global Kill Switch or missing ad key
-  if (!ADS_CONFIG.enabled || !key) {
+  // Global Kill Switch or missing ad key or failed/blocked by AdBlock
+  if (!ADS_CONFIG.enabled || !key || isFailed) {
     return null;
   }
 
+  // On localhost, Adsterra will not serve live ads because it requires an approved production domain.
+  // We display a clean informative placeholder so local developers understand why live ads don't render.
+  if (isLocalhost) {
+    return (
+      <div
+        className={`flex flex-col items-center justify-center w-full my-2 overflow-hidden ${className}`}
+      >
+        {showLabel && ADS_CONFIG.showLabel && (
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1 select-none">
+            Advertisement (Local Preview)
+          </span>
+        )}
+        <div
+          style={{
+            width: Math.min(width, 728),
+            maxWidth: "100%",
+            height,
+            border: "1px dashed rgba(192, 57, 43, 0.4)",
+            borderRadius: 8,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(192, 57, 43, 0.03)",
+            padding: "8px 16px",
+            textAlign: "center",
+          }}
+        >
+          <span style={{ fontSize: "12px", fontWeight: 700, color: "#c0392b" }}>
+            Adsterra Banner Placeholder ({width}×{height})
+          </span>
+          <span style={{ fontSize: "11px", color: "#666", marginTop: 4 }}>
+            Live ads only serve on your verified production domain (e.g. blog.nexuscalculator.net), not on localhost.
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   // Isolated HTML for iframe srcDoc
+  // Important:
+  // 1. We include an onerror handler to detect adblockers immediately.
+  // 2. We detect if no ad elements were rendered after 4s (no-fill) and notify parent to collapse.
+  // 3. We do NOT use the sandbox attribute because sandboxed srcdoc strips the Referer header,
+  //    which causes Adsterra's CDN to return Content-Length: 0 (blank script).
   const adHtml = `
     <!DOCTYPE html>
     <html lang="en">
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="referrer" content="no-referrer-when-downgrade">
         <style>
           * { box-sizing: border-box; }
           body { 
@@ -98,7 +175,20 @@ export default function AdsterraBanner({
             'params' : {}
           };
         </script>
-        <script type="text/javascript" src="https://www.highperformanceformat.com/${key}/invoke.js"></script>
+        <script
+          type="text/javascript"
+          src="https://www.highperformanceformat.com/${key}/invoke.js"
+          onerror="window.parent.postMessage({ type: 'ADSTERRA_FAILED', key: '${key}' }, '*');"
+        ></script>
+        <script type="text/javascript">
+          // Auto-collapse if no ad container was rendered after 4 seconds (e.g. AdBlock or zero fill)
+          setTimeout(function() {
+            var hasAd = document.body.querySelectorAll('iframe, img, a, div[id*="atContainer"]').length > 0;
+            if (!hasAd) {
+              window.parent.postMessage({ type: 'ADSTERRA_EMPTY', key: '${key}' }, '*');
+            }
+          }, 4000);
+        </script>
       </body>
     </html>
   `;
@@ -106,10 +196,9 @@ export default function AdsterraBanner({
   return (
     <div
       ref={containerRef}
-      className={`flex flex-col items-center justify-center w-full my-4 overflow-hidden ${className}`}
-      style={{ minHeight: height }}
+      className={`flex flex-col items-center justify-center w-full my-2 overflow-hidden ${className}`}
+      style={{ minHeight: isVisible ? height : 0 }}
     >
-      {/* Discreet label conforming to Google Better Ads Standards */}
       {showLabel && ADS_CONFIG.showLabel && (
         <span
           className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 mb-1 select-none"
@@ -119,14 +208,13 @@ export default function AdsterraBanner({
         </span>
       )}
 
-      {isVisible ? (
+      {isVisible && (
         <iframe
           srcDoc={adHtml}
           width={width}
           height={height}
           frameBorder="0"
           scrolling="no"
-          sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
           style={{
             border: "none",
             overflow: "hidden",
@@ -134,18 +222,6 @@ export default function AdsterraBanner({
           }}
           title={title}
           loading="lazy"
-        />
-      ) : (
-        // Lightweight CLS placeholder while waiting for viewport scroll
-        <div
-          style={{
-            width: Math.min(width, 728),
-            maxWidth: "100%",
-            height,
-            backgroundColor: "rgba(0, 0, 0, 0.02)",
-            borderRadius: 6,
-          }}
-          aria-hidden="true"
         />
       )}
     </div>
