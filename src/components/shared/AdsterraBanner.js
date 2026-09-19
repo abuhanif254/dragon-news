@@ -33,6 +33,7 @@ export default function AdsterraBanner({
   const width = directWidth || preset?.width || 300;
   const height = directHeight || preset?.height || 250;
   const title = preset?.title || `Adsterra Ad ${key || "banner"}`;
+  const scriptHost = ADS_CONFIG.scriptHost || "www.highrevenueformat.com";
 
   // Check if running on localhost/local network
   useEffect(() => {
@@ -177,7 +178,7 @@ export default function AdsterraBanner({
         </script>
         <script
           type="text/javascript"
-          src="https://www.highperformanceformat.com/${key}/invoke.js"
+          src="https://${scriptHost}/${key}/invoke.js"
           onerror="window.parent.postMessage({ type: 'ADSTERRA_FAILED', key: '${key}' }, '*');"
         ></script>
         <script type="text/javascript">

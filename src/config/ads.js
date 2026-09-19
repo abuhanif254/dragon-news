@@ -1,7 +1,7 @@
 /**
  * Centralized Advertising Configuration
  * 
- * Defines all ad placements, dimensions, keys, and global controls.
+ * Defines all ad placements, dimensions, keys, domains, and global controls.
  * To pause all ads sitewide, toggle `enabled: false`.
  */
 export const ADS_CONFIG = {
@@ -11,9 +11,12 @@ export const ADS_CONFIG = {
   // Display discreet "ADVERTISEMENT" label above/below banners
   showLabel: true,
 
+  // Adsterra invoke domain
+  scriptHost: "www.highrevenueformat.com",
+
   // Adsterra Banner Placements
   adsterra: {
-    // Desktop Leaderboard on Homepage
+    // Desktop Leaderboard on Homepage (728x90)
     homeLeaderboard: {
       key: "c2aa037e57084facffa3af8c79667de9",
       width: 728,
@@ -22,7 +25,7 @@ export const ADS_CONFIG = {
       title: "Homepage Top Leaderboard",
     },
 
-    // Desktop Leaderboard on Article Detail Page
+    // Desktop Leaderboard on Article Detail Page (728x90)
     articleLeaderboard: {
       key: "c2aa037e57084facffa3af8c79667de9",
       width: 728,
