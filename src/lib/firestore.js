@@ -20,6 +20,33 @@ import {
 import { normalizeArticle } from "@/lib/content-utils";
 import { fetchWithRetry } from "@/utils/fetchWithRetry";
 import { triggerRevalidation } from "./actions";
+import DOMPurify from "isomorphic-dompurify";
+
+/**
+ * Sanitize raw HTML from the Quill editor before persisting to Firestore.
+ * Allows safe rich-text tags (headings, lists, links, images) while stripping
+ * any script, iframe, on* handlers, or javascript: URIs.
+ */
+function sanitizeArticleHtml(html = "") {
+  if (!html || typeof html !== "string") return "";
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      "p", "br", "strong", "b", "em", "i", "u", "s", "del",
+      "h1", "h2", "h3", "h4", "h5", "h6",
+      "ul", "ol", "li", "blockquote", "pre", "code",
+      "a", "img", "figure", "figcaption",
+      "table", "thead", "tbody", "tr", "th", "td",
+      "span", "div", "sub", "sup",
+    ],
+    ALLOWED_ATTR: [
+      "href", "src", "alt", "title", "target", "rel",
+      "class", "id", "width", "height",
+      "data-*",
+    ],
+    ALLOW_DATA_ATTR: true,
+    FORCE_BODY: true,
+  });
+}
 
 // Collection reference
 // Get all news
@@ -99,8 +126,12 @@ export async function createNews(newsData) {
       img: newsData.author?.img || "",
     };
 
+    // Sanitize article HTML before persisting (defence against stored XSS)
+    const sanitizedDetails = sanitizeArticleHtml(newsData.details);
+
     const docRef = await addDoc(newsCollection, {
       ...newsData,
+      details: sanitizedDetails,
       status,
       author,
       createdBy: newsData.createdBy || author.uid || "",
@@ -150,8 +181,14 @@ export const updateNewsStatus = async (id, status) => {
 export async function updateNews(id, newsData) {
   try {
     const docRef = doc(db, "news", id);
+
+    // Sanitize article HTML before persisting (defence against stored XSS)
+    const sanitizedData = newsData.details
+      ? { ...newsData, details: sanitizeArticleHtml(newsData.details) }
+      : newsData;
+
     await updateDoc(docRef, {
-      ...newsData,
+      ...sanitizedData,
       updatedAt: serverTimestamp(),
     });
     await triggerRevalidation("news");

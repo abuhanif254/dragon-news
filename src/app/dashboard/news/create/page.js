@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
-  Box, Typography, TextField, Button, Paper, Grid, MenuItem, Alert,
+  Box, Typography, TextField, Button, Grid, MenuItem, Alert,
   Stack, Card, CardContent, Chip, Avatar, Divider, LinearProgress,
   FormControlLabel, Switch, Dialog, DialogTitle, DialogContent,
   DialogActions, DialogContentText,
@@ -18,7 +18,7 @@ import CustomEditor from "@/components/ui/CustomEditor/CustomEditor";
 import ImageUpload from "@/components/ui/ImageUpload/ImageUpload";
 import SeoMetaFields from "@/components/ui/SeoMetaFields/SeoMetaFields";
 import SeoAnalyzerPanel from "@/components/ui/SeoAnalyzerPanel/SeoAnalyzerPanel";
-import { createExcerpt, stripHtml } from "@/lib/content-utils";
+import { createExcerpt, stripHtml, generateSlug } from "@/lib/content-utils";
 import RoleGuard from "@/components/auth/RoleGuard";
 import ArticlePreviewModal from "@/components/ui/ArticlePreviewModal/ArticlePreviewModal";
 

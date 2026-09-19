@@ -7,6 +7,10 @@ import {
   Button,
   Card,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   InputAdornment,
   MenuItem,
@@ -44,8 +48,13 @@ export default function UserManagementPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [search, setSearch] = useState("");
+  const [csvConfirmOpen, setCsvConfirmOpen] = useState(false);
 
-  const handleExport = () => {
+  // Show GDPR warning before exporting user PII
+  const handleExport = () => setCsvConfirmOpen(true);
+
+  const handleConfirmedExport = () => {
+    setCsvConfirmOpen(false);
     const csv = filteredUsers.map(u => `"${u.name || ''}","${u.email}","${u.role}","${u.writerApplicationStatus || 'none'}"`).join("\n");
     const blob = new Blob([`Name,Email,Role,Writer Status\n${csv}`], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
@@ -53,6 +62,7 @@ export default function UserManagementPage() {
     a.href = url;
     a.download = `users_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
+    window.URL.revokeObjectURL(url);
   };
 
   const fetchUsers = async () => {
@@ -307,6 +317,39 @@ export default function UserManagementPage() {
           </Table>
         </TableContainer>
       </Card>
+
+      {/* GDPR CSV Export Confirmation Dialog */}
+      <Dialog open={csvConfirmOpen} onClose={() => setCsvConfirmOpen(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 800, fontSize: "1.1rem" }}>
+          ⚠️ Export Contains Personal Data (PII)
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: "#475569", lineHeight: 1.7 }}>
+            This CSV export includes <strong>personally identifiable information (PII)</strong> such as user email addresses and account roles.
+            <br /><br />
+            By proceeding you confirm that:
+          </Typography>
+          <Box component="ul" sx={{ color: "#475569", fontSize: "0.875rem", lineHeight: 1.9, mt: 1, pl: 2.5 }}>
+            <li>You have a legitimate and lawful purpose for downloading this data.</li>
+            <li>The file will be stored securely and not shared with unauthorised parties.</li>
+            <li>You will delete it when it is no longer needed.</li>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button onClick={() => setCsvConfirmOpen(false)} variant="outlined" sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2 }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmedExport}
+            variant="contained"
+            color="error"
+            startIcon={<DownloadIcon />}
+            sx={{ textTransform: "none", fontWeight: 700, borderRadius: 2 }}
+          >
+            I Understand — Download CSV
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
     </AdminRouteGuard>
   );

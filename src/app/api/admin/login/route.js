@@ -33,30 +33,24 @@ export async function POST(request) {
 
     let decodedToken = null;
 
-    // 1. Attempt verification with Firebase Admin SDK if available
-    if (adminAuth) {
-      try {
-        decodedToken = await adminAuth.verifyIdToken(idToken);
-      } catch (verifyErr) {
-        console.warn("Firebase admin token verification warning:", verifyErr.message);
-      }
+    // Verify token cryptographic signature with Firebase Admin SDK
+    // No fallback: if Admin SDK is unavailable, we cannot safely verify identity
+    if (!adminAuth) {
+      console.error("Firebase Admin SDK unavailable — cannot verify token signature.");
+      return NextResponse.json(
+        { status: false, message: "Authentication service temporarily unavailable. Please try again shortly." },
+        { status: 503 }
+      );
     }
 
-    // 2. Fallback: Parse standard 3-part Firebase JWT payload securely
-    if (!decodedToken) {
-      const parts = idToken.split(".");
-      if (parts.length === 3) {
-        try {
-          const payloadJson = JSON.parse(
-            Buffer.from(parts[1].replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf-8")
-          );
-          if (payloadJson.exp && payloadJson.exp > Math.floor(Date.now() / 1000)) {
-            decodedToken = payloadJson;
-          }
-        } catch (e) {
-          console.error("JWT payload parse error:", e);
-        }
-      }
+    try {
+      decodedToken = await adminAuth.verifyIdToken(idToken);
+    } catch (verifyErr) {
+      console.warn("Firebase admin token verification failed:", verifyErr.message);
+      return NextResponse.json(
+        { status: false, message: "Invalid or expired session token." },
+        { status: 401 }
+      );
     }
 
     if (!decodedToken || !decodedToken.email) {

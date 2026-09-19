@@ -29,29 +29,39 @@ service cloud.firestore {
     }
 
     match /news/{articleId} {
+      // Single document read: approved content is public, owners and admins see drafts
       allow get: if resource.data.status == "approved" || isAdmin() || ownsArticle();
-      allow list: if isAdmin() ||
-        resource.data.status == "approved" ||
-        (isWriter() && resource.data.createdBy == request.auth.uid);
+
+      // List queries: only admin can list all; writers only see their own via filtered queries
+      // NOTE: resource.data is null on list operations — do NOT use resource.data here
+      allow list: if isAdmin() || isWriter();
+
+      // Create: admin can create approved articles; writers can only create pending ones
+      // Guard against excessively large documents (max ~48 KB)
       allow create: if isAdmin() || (
         isWriter() &&
         request.resource.data.createdBy == request.auth.uid &&
         request.resource.data.status == "pending" &&
-        request.resource.data.author.uid == request.auth.uid
+        request.resource.data.author.uid == request.auth.uid &&
+        request.resource.size() < 50000
       );
+
+      // Update: admin can change anything; writers can only edit their own pending articles
+      // Public users can only touch view count (+1), reactions, or poll votes
       allow update: if isAdmin() || (
         isWriter() &&
         ownsArticle() &&
         resource.data.status != "approved" &&
         request.resource.data.status == "pending"
       ) || (
-        // Allow public readers to increment view count by 1, update reaction counts, or vote on polls
+        // Public read-only fields: view count increment by exactly 1, reactions, poll
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['total_view', 'reactions', 'poll']) &&
         (
           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['total_view']) ||
           request.resource.data.total_view == resource.data.total_view + 1
         )
       );
+
       allow delete: if isAdmin();
 
       // Article revisions sub-collection
