@@ -74,6 +74,21 @@ export default function RichTextRenderer({ content }) {
           />
         );
       }
+
+      if (domNode.type === 'tag' && domNode.name === 'iframe') {
+        const { src, title } = domNode.attribs || {};
+        return (
+          <div className="relative aspect-video my-6 w-full rounded-xl overflow-hidden shadow-lg">
+            <iframe
+              src={src}
+              title={title || "Embedded media"}
+              className="w-full h-full border-0 absolute inset-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        );
+      }
     }
   });
 

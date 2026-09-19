@@ -58,6 +58,11 @@ export async function generateMetadata() {
     // ── Canonical & Alternates ──
     alternates: {
       canonical: "/",
+      languages: {
+        en: "/",
+        bn: "/",
+        "x-default": "/",
+      },
       types: {
         "application/rss+xml": [
           { url: "/rss.xml", title: `${siteName} RSS Feed` },

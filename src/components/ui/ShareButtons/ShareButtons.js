@@ -17,12 +17,32 @@ const ShareButtons = ({ title, url, direction = "row" }) => {
   const [mounted, setMounted] = useState(false);
   const [pageUrl, setPageUrl] = useState(url || "");
 
+  const [hasNativeShare, setHasNativeShare] = useState(false);
+
   useEffect(() => {
     setMounted(true);
     if (!url && typeof window !== "undefined") {
       setPageUrl(window.location.href);
     }
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      setHasNativeShare(true);
+    }
   }, [url]);
+
+  const handleNativeShare = async () => {
+    try {
+      const shareUrl = url || window.location.href;
+      await navigator.share({
+        title: title || "The Brain | News & Media",
+        text: title || "",
+        url: shareUrl,
+      });
+    } catch (err) {
+      if (err.name !== "AbortError") {
+        console.error("Native share failed:", err);
+      }
+    }
+  };
 
   const handleCopy = async () => {
     try {
@@ -95,6 +115,28 @@ const ShareButtons = ({ title, url, direction = "row" }) => {
               Share
             </Typography>
           </Stack>
+        )}
+        {hasNativeShare && (
+          <Tooltip title="Share via Apps" arrow>
+            <IconButton
+              onClick={handleNativeShare}
+              size="small"
+              sx={{
+                color: "white",
+                background: "linear-gradient(135deg, #c0392b 0%, #e74c3c 100%)",
+                width: 34,
+                height: 34,
+                boxShadow: "0 2px 8px rgba(192,57,43,0.3)",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                "&:hover": {
+                  transform: "translateY(-2px) scale(1.1)",
+                  boxShadow: "0 4px 14px rgba(192,57,43,0.5)",
+                },
+              }}
+            >
+              <ShareIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         )}
         {BUTTONS.map(({ icon, label, href, color }) => (
           <Tooltip key={label} title={label} arrow>

@@ -297,24 +297,18 @@ export const deleteMessage = async (id) => {
 };
 
 // Newsletter Subscription
-export const subscribeToNewsletter = async (email) => {
+export const subscribeToNewsletter = async (email, hpWebsite = "") => {
   try {
-    const q = query(collection(db, "subscribers"), where("email", "==", email));
-    const querySnapshot = await getDocs(q);
-    
-    if (!querySnapshot.empty) {
-      return { status: "exists", message: "You are already subscribed!" };
-    }
-
-    await addDoc(collection(db, "subscribers"), {
-      email,
-      subscribedAt: new Date().toISOString(),
-      status: "active"
+    const res = await fetch("/api/newsletter/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, hp_website: hpWebsite }),
     });
-    return { status: "success", message: "Subscribed successfully!" };
+    const data = await res.json();
+    return data;
   } catch (error) {
     console.error("Error subscribing:", error);
-    throw error;
+    return { status: "error", message: "Failed to subscribe. Please try again." };
   }
 };
 

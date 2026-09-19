@@ -1,5 +1,5 @@
 import { getAllNews } from "@/utils/getAllNews";
-import { articleUrl, authorUrl, SITE_URL } from "@/lib/site";
+import { articleUrl, authorUrl, absoluteImage, SITE_URL } from "@/lib/site";
 import { parseDate } from "@/lib/content-utils";
 
 export const revalidate = 3600; // Re-generate sitemap at most once per hour
@@ -59,14 +59,18 @@ export default async function sitemap() {
   }));
 
   // ── Article pages ─────────────────────────────────────────────────────────
-  const newsEntries = newsData.map((news) => ({
-    url: articleUrl(news),
-    lastModified:
-      parseDate(news.updatedAt || news.publishedAt || news.author?.published_date) ||
-      new Date(),
-    changeFrequency: "weekly",
-    priority: 0.85,
-  }));
+  const newsEntries = newsData.map((news) => {
+    const img = absoluteImage(news.image_url || news.thumbnail_url);
+    return {
+      url: articleUrl(news),
+      lastModified:
+        parseDate(news.updatedAt || news.publishedAt || news.author?.published_date) ||
+        new Date(),
+      changeFrequency: "weekly",
+      priority: 0.85,
+      ...(img ? { images: [img] } : {}),
+    };
+  });
 
   return [
     ...staticEntries,

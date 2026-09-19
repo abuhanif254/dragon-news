@@ -88,15 +88,45 @@ export async function generateMetadata({ params }) {
   ).slice(0, 15);
 
   const canonicalUrl = articleUrl(news);
+  const dynamicOgUrl = `${SITE_URL}/api/og?title=${encodeURIComponent(news.title)}&category=${encodeURIComponent(news.category || "News")}&author=${encodeURIComponent(news.author?.name || SITE_NAME)}`;
+  const ogImages = image
+    ? [
+        {
+          url: image,
+          width: 1200,
+          height: 630,
+          alt: imageAlt,
+          type: "image/jpeg",
+        },
+        {
+          url: dynamicOgUrl,
+          width: 1200,
+          height: 630,
+          alt: `${news.title} | ${SITE_NAME}`,
+        },
+      ]
+    : [
+        {
+          url: dynamicOgUrl,
+          width: 1200,
+          height: 630,
+          alt: `${news.title} | ${SITE_NAME}`,
+        },
+      ];
 
   return {
     title: news.title,
     description,
     keywords: dynamicKeywords,
 
-    // ── Canonical ──
+    // ── Canonical & Multilingual Alternates ──
     alternates: {
       canonical: canonicalUrl,
+      languages: {
+        en: canonicalUrl,
+        bn: canonicalUrl,
+        "x-default": canonicalUrl,
+      },
     },
 
     // ── Open Graph (Article) ──
@@ -105,15 +135,7 @@ export async function generateMetadata({ params }) {
       description,
       url: canonicalUrl,
       siteName: SITE_NAME,
-      images: [
-        {
-          url: image,
-          width: 1200,
-          height: 630,
-          alt: imageAlt,
-          type: "image/jpeg",
-        },
-      ],
+      images: ogImages,
       type: "article",
       locale,
       publishedTime,
@@ -130,7 +152,7 @@ export async function generateMetadata({ params }) {
       creator: SITE_TWITTER_HANDLE,
       title: news.title,
       description,
-      images: [{ url: image, alt: imageAlt }],
+      images: ogImages,
     },
 
     // ── Robots ──
@@ -165,45 +187,69 @@ export default async function NewsDetailPage({ params }) {
     permanentRedirect(`/news/${encodeURIComponent(canonicalSlug)}`);
   }
 
-  // Smart Recommendation Algorithm:
-  // 1. Same category first
-  // 2. Same author fallback
-  // 3. Most popular / recent articles as final fallback
+  // ── Semantic Content Recommendation Algorithm ──
+  // Evaluates tag intersection, focus keyword matches, title word similarity, and category affinity.
   const allResponse = await getAllNews({ includeFallback: false });
-  const relatedList = [];
-  if (allResponse.status) {
-    // Same category (excluding current)
-    const sameCategory = allResponse.data.filter(
-      (item) =>
-        item.category === news.category &&
-        (item.id || item._id) !== newsId
-    );
-    relatedList.push(...sameCategory);
+  let related = [];
+  if (allResponse.status && Array.isArray(allResponse.data)) {
+    const currentTags = Array.isArray(news.seoMeta?.tags) ? news.seoMeta.tags.map((t) => t.toLowerCase()) : [];
+    const currentFocus = (news.seoMeta?.focusKeyword || "").toLowerCase();
+    const currentCategory = (news.category || "").toLowerCase();
+    const currentAuthor = (news.author?.name || "").toLowerCase();
+    const currentWords = (news.title || "")
+      .toLowerCase()
+      .replace(/[^\p{L}\p{M}\p{N}\s]/gu, "")
+      .split(/\s+/)
+      .filter((w) => w.length > 2);
 
-    // Same author (excluding current, no duplicates)
-    if (relatedList.length < 3) {
-      const sameAuthor = allResponse.data.filter(
-        (item) =>
-          item.author?.name === news.author?.name &&
-          (item.id || item._id) !== newsId &&
-          !relatedList.some((r) => (r.id || r._id) === (item.id || item._id))
-      );
-      relatedList.push(...sameAuthor);
-    }
+    const candidates = allResponse.data
+      .filter((item) => (item.id || item._id) !== news.id && (item.id || item._id) !== newsId)
+      .map((item) => {
+        let score = 0;
+        const itemTags = Array.isArray(item.seoMeta?.tags) ? item.seoMeta.tags.map((t) => t.toLowerCase()) : [];
+        const itemFocus = (item.seoMeta?.focusKeyword || "").toLowerCase();
+        const itemCategory = (item.category || "").toLowerCase();
+        const itemAuthor = (item.author?.name || "").toLowerCase();
 
-    // General fallback: popular reads (excluding current, no duplicates)
-    if (relatedList.length < 3) {
-      const popularFallback = allResponse.data
-        .filter(
-          (item) =>
-            (item.id || item._id) !== newsId &&
-            !relatedList.some((r) => (r.id || r._id) === (item.id || item._id))
-        )
-        .sort((a, b) => (b.total_view || 0) - (a.total_view || 0));
-      relatedList.push(...popularFallback);
-    }
+        // 1. Shared tags: +4 points per tag
+        const sharedTags = itemTags.filter((t) => currentTags.includes(t));
+        score += sharedTags.length * 4;
+
+        // 2. Focus keyword match: +3 points
+        if (currentFocus && itemFocus && currentFocus === itemFocus) {
+          score += 3;
+        }
+
+        // 3. Same category: +2 points
+        if (currentCategory && itemCategory && currentCategory === itemCategory) {
+          score += 2;
+        }
+
+        // 4. Same author: +1 point
+        if (currentAuthor && itemAuthor && currentAuthor === itemAuthor) {
+          score += 1;
+        }
+
+        // 5. Title word overlaps: +1 point per significant word
+        if (currentWords.length > 0) {
+          const itemTitleWords = (item.title || "")
+            .toLowerCase()
+            .replace(/[^\p{L}\p{M}\p{N}\s]/gu, "")
+            .split(/\s+/);
+          const overlaps = currentWords.filter((w) => itemTitleWords.includes(w));
+          score += overlaps.length;
+        }
+
+        // Popularity tie-breaker
+        const views = Number(item.total_view) || 0;
+        score += Math.min(views / 100, 1);
+
+        return { item, score };
+      });
+
+    candidates.sort((a, b) => b.score - a.score);
+    related = candidates.slice(0, 3).map((c) => c.item);
   }
-  const related = relatedList.slice(0, 3);
 
   // ── NewsArticle JSON-LD (full Google News spec) ──────────────────────────
   const publishedIso = toIsoDate(news.publishedAt || news.author?.published_date);
